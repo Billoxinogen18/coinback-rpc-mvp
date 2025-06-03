@@ -112,7 +112,7 @@ const RpcConfiguration = () => {
       <div className="mt-3 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg text-yellow-700 dark:text-yellow-400 text-xs flex items-start">
         <AlertTriangle size={28} className="mr-2 flex-shrink-0 text-yellow-500" />
         <span>
-          <strong>Important:</strong> This is a simulation. The RPC URL provided is a placeholder and will not connect to a real network for cashback. 
+          <strong>Important:</strong> This is a . The RPC URL provided is a placeholder and will not connect to a real network for cashback. 
           This feature demonstrates how a user would typically add a custom RPC.
         </span>
       </div>

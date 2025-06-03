@@ -23,7 +23,7 @@ const SimulateTransaction = ({ onTransactionSimulated }) => {
       return;
     }
     if (amount > 1000) { 
-        toast.error("Simulation amount too high. Please use a smaller value.");
+        toast.error(" amount too high. Please use a smaller value.");
         return;
     }
 
@@ -34,8 +34,8 @@ const SimulateTransaction = ({ onTransactionSimulated }) => {
         onTransactionSimulated(); 
       }
     } catch (error) {
-      console.error('Error during transaction simulation:', error);
-      toast.error('An unexpected error occurred during simulation.');
+      console.error('Error during transaction :', error);
+      toast.error('An unexpected error occurred during .');
     } finally {
       setIsSimulating(false);
     }

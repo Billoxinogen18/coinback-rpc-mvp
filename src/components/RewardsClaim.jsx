@@ -88,7 +88,7 @@ const RewardsClaim = ({ onRewardsClaimed }) => {
         You have <strong className="text-accent font-bold">{parseFloat(claimableAmount).toFixed(5)} ETH</strong> (simulated) available to claim.
       </p>
       <p className="text-xs text-muted mb-5">
-        In a real system, claiming would involve an on-chain transaction and may incur gas fees. This is a simulation.
+        In a real system, claiming would involve an on-chain transaction and may incur gas fees. This is a .
       </p>
       
       {claimableAmount > 0 ? (
