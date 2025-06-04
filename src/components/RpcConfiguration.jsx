@@ -1,37 +1,29 @@
 import React, { useState } from 'react';
 import toast from 'react-hot-toast';
-import { Settings, Copy, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Settings, Copy, CheckCircle, ShieldCheckIcon, Info } from 'lucide-react';
 
 const RpcConfiguration = () => {
-  const mockRpcUrl = 'https://rpc.coinback-mvp.example.com/mainnet-simulated'; 
-  const mockChainId = '1'; 
-  const mockNetworkName = 'Coinback MVP Mainnet (Simulated)';
+  const mockRpcUrl = 'https://rpc.coinback.example.com/mainnet';
+  const mockChainId = '1';
+  const mockNetworkName = 'Coinback Mainnet RPC';
   const mockCurrencySymbol = 'ETH';
   const mockCurrencyDecimals = 18;
 
   const [copied, setCopied] = useState(false);
 
   const handleCopyRpcUrl = () => {
-    const textarea = document.createElement('textarea');
-    textarea.value = mockRpcUrl;
-    textarea.style.position = 'fixed'; 
-    document.body.appendChild(textarea);
-    textarea.select();
-    try {
-      document.execCommand('copy'); 
+    navigator.clipboard.writeText(mockRpcUrl).then(() => {
       setCopied(true);
       toast.success('RPC URL copied to clipboard!');
       setTimeout(() => setCopied(false), 2500);
-    } catch (err) {
+    }).catch(err => {
       toast.error('Failed to copy RPC URL.');
-      console.error('Fallback copy failed:', err);
-    }
-    document.body.removeChild(textarea);
+    });
   };
   
   const handleAddToWallet = async () => {
     if (typeof window.ethereum === 'undefined') {
-      toast.error('MetaMask (or other Ethereum wallet) is not installed. Please install it to use this feature.');
+      toast.error('Ethereum wallet (e.g., MetaMask) is not installed.');
       return;
     }
     try {
@@ -39,22 +31,21 @@ const RpcConfiguration = () => {
         method: 'wallet_addEthereumChain',
         params: [
           {
-            chainId: `0x${parseInt(mockChainId, 10).toString(16)}`, 
+            chainId: `0x${parseInt(mockChainId, 10).toString(16)}`,
             chainName: mockNetworkName,
             nativeCurrency: {
-              name: mockCurrencySymbol, 
-              symbol: mockCurrencySymbol, 
+              name: mockCurrencySymbol,
+              symbol: mockCurrencySymbol,
               decimals: mockCurrencyDecimals,
             },
-            rpcUrls: [mockRpcUrl], 
+            rpcUrls: [mockRpcUrl],
           },
         ],
       });
-      toast.success(`"${mockNetworkName}" network added/switched in your wallet (simulated)!`);
+      toast.success(`"${mockNetworkName}" network added/switched in your wallet!`);
     } catch (error) {
-      console.error('Failed to add/switch chain:', error);
-      if (error.code === 4001) { 
-        toast.error('Request to add network was rejected.');
+      if (error.code === 4001) {
+        toast.error('Request to add network was rejected by user.');
       } else {
         toast.error(`Failed to add network: ${error.message || 'Unknown error'}`);
       }
@@ -62,62 +53,70 @@ const RpcConfiguration = () => {
   };
 
   return (
-    <div className="bg-card p-6 rounded-xl shadow-medium mb-8 print:hidden">
-      <div className="flex items-center text-primary-dark mb-4">
-        <Settings size={24} className="mr-3 flex-shrink-0" />
-        <h2 className="text-2xl font-semibold">RPC Configuration (Simulated)</h2>
+    <div className="neumorphic-outset card-base">
+      <div className="flex items-center text-primaryDark mb-5">
+        <Settings size={28} className="mr-3 flex-shrink-0 drop-shadow-sm" />
+        <h2 className="text-2xl font-semibold">RPC Configuration</h2>
       </div>
-      <p className="text-muted mb-5">
-        To (simulate) earning cashback on your transactions, add our custom RPC to your wallet.
-        All transactions routed through this RPC are (simulated to be) eligible for rewards and MEV protection.
+      <p className="text-textSecondary mb-4">
+        Add our custom RPC to your wallet to earn cashback and enjoy enhanced MEV protection.
       </p>
+      <div className="info-box info-box-blue mb-6">
+        <div className="flex items-start">
+            <ShieldCheckIcon size={28} className="mr-3 mt-px flex-shrink-0 text-blueHighlight"/>
+            <div>
+                <h3 className="font-semibold text-base">Coinback RPC Benefits:</h3>
+                <ul className="list-disc list-inside text-xs mt-1.5 space-y-1">
+                    <li>Transactions bypass the public mempool for enhanced privacy.</li>
+                    <li>Direct routing to partnered block builders.</li>
+                    <li>Protection against front-running and sandwich attacks.</li>
+                    <li>Builders share profits, funding your cashback rewards.</li>
+                </ul>
+            </div>
+        </div>
+      </div>
       
-      <div className="space-y-4 mb-6">
+      <div className="space-y-5 mb-8">
         <div>
-          <label htmlFor="networkName" className="block text-sm font-medium text-muted mb-1">Network Name:</label>
-          <input id="networkName" type="text" readOnly value={mockNetworkName} className="w-full text-text p-3 bg-background rounded-lg border border-gray-300 focus:outline-none"/>
+          <label htmlFor="networkName" className="block text-sm font-medium text-textSecondary mb-1.5">Network Name:</label>
+          <input id="networkName" type="text" readOnly value={mockNetworkName} className="neumorphic-input"/>
         </div>
         <div>
-          <label htmlFor="rpcUrl" className="block text-sm font-medium text-muted mb-1">New RPC URL:</label>
+          <label htmlFor="rpcUrl" className="block text-sm font-medium text-textSecondary mb-1.5">New RPC URL:</label>
           <div className="flex items-center">
-            <input 
-              id="rpcUrl"
-              type="text" 
-              readOnly 
-              value={mockRpcUrl} 
-              className="flex-grow p-3 bg-background rounded-l-lg border border-r-0 border-gray-300 focus:outline-none"
-            />
-            <button 
-              onClick={handleCopyRpcUrl}
-              className="p-3 bg-primary text-white rounded-r-lg hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 transition-colors duration-150 flex items-center"
-              aria-label="Copy RPC URL"
-            >
+            <input id="rpcUrl" type="text" readOnly value={mockRpcUrl}
+              className="neumorphic-input rounded-r-none border-r-0"/>
+            <button onClick={handleCopyRpcUrl}
+              className="neumorphic-button neumorphic-button-primary rounded-l-none px-4 py-3 h-[49px]"
+              aria-label="Copy RPC URL">
               {copied ? <CheckCircle size={20} /> : <Copy size={20} />}
             </button>
           </div>
         </div>
         <div>
-          <label htmlFor="chainId" className="block text-sm font-medium text-muted mb-1">Chain ID:</label>
-          <input id="chainId" type="text" readOnly value={mockChainId} className="w-full text-text p-3 bg-background rounded-lg border border-gray-300 focus:outline-none"/>
+          <label htmlFor="chainId" className="block text-sm font-medium text-textSecondary mb-1.5">Chain ID:</label>
+          <input id="chainId" type="text" readOnly value={mockChainId} className="neumorphic-input"/>
+        </div>
+         <div>
+          <label htmlFor="currencySymbol" className="block text-sm font-medium text-textSecondary mb-1.5">Currency Symbol:</label>
+          <input id="currencySymbol" type="text" readOnly value={mockCurrencySymbol} className="neumorphic-input"/>
         </div>
       </div>
 
-      <button
-        onClick={handleAddToWallet}
-        className="w-full px-6 py-3 bg-accent text-card font-semibold rounded-lg shadow-subtle hover:bg-accent/90 focus:outline-none focus:ring-2 focus:ring-accent/80 focus:ring-offset-2 transition-colors duration-150 flex items-center justify-center space-x-2"
-      >
+      <button onClick={handleAddToWallet}
+        className="neumorphic-button neumorphic-button-accent w-full">
         <Settings size={20} />
-        <span>Add Coinback RPC to Wallet (Simulated)</span>
+        <span>Add Coinback RPC to Wallet</span>
       </button>
-      <div className="mt-3 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg text-yellow-700 dark:text-yellow-400 text-xs flex items-start">
-        <AlertTriangle size={28} className="mr-2 flex-shrink-0 text-yellow-500" />
-        <span>
-          <strong>Important:</strong> This is a . The RPC URL provided is a placeholder and will not connect to a real network for cashback. 
-          This feature demonstrates how a user would typically add a custom RPC.
-        </span>
+      <div className="info-box info-box-yellow">
+        <div className="flex items-start">
+          <Info size={26} className="mr-2 flex-shrink-0 text-yellowHighlight" />
+          <span>
+            The RPC URL provided is for demonstration in this MVP. In a live environment, this would be the actual Coinback RPC endpoint.
+          </span>
+        </div>
       </div>
     </div>
   );
 };
-
 export default RpcConfiguration;

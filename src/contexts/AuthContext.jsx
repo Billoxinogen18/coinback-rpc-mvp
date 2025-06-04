@@ -16,11 +16,11 @@ export const AuthProvider = ({ children }) => {
   const [userProfile, setUserProfile] = useState(null);
   const [loadingAuth, setLoadingAuth] = useState(true); 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [mEvProtectionActive, setMEvProtectionActive] = useState(true);
 
   useEffect(() => {
     const attemptAuth = async () => {
       if (!auth) { 
-        console.warn("Firebase Auth not initialized when AuthProvider mounted. Waiting...");
         setLoadingAuth(false); 
         return () => {}; 
       }
@@ -32,6 +32,7 @@ export const AuthProvider = ({ children }) => {
           setIsAuthenticated(true);
           const profile = await getUserProfile(user.uid);
           setUserProfile(profile);
+          setMEvProtectionActive(profile?.mEvProtectionActive !== undefined ? profile.mEvProtectionActive : true);
         } else {
           try {
             const ensuredUser = await ensureAuthenticated(); 
@@ -40,28 +41,26 @@ export const AuthProvider = ({ children }) => {
               setIsAuthenticated(true);
               const profile = await getUserProfile(ensuredUser.uid);
               setUserProfile(profile);
+              setMEvProtectionActive(profile?.mEvProtectionActive !== undefined ? profile.mEvProtectionActive : true);
             } else {
               setCurrentUser(null);
               setUserProfile(null);
               setIsAuthenticated(false);
+              setMEvProtectionActive(false);
             }
           } catch (authError) {
             console.error("AuthContext: Error during ensureAuthenticated:", authError);
             setCurrentUser(null);
             setUserProfile(null);
             setIsAuthenticated(false);
+            setMEvProtectionActive(false);
           }
         }
         setLoadingAuth(false);
       });
-
-      return () => {
-        unsubscribe();
-      };
+      return () => unsubscribe();
     };
-
     attemptAuth();
-    
   }, []); 
 
   const value = useMemo(() => ({
@@ -70,17 +69,13 @@ export const AuthProvider = ({ children }) => {
     userProfile,
     isAuthenticated,
     loadingAuth,
-  }), [currentUser, userProfile, isAuthenticated, loadingAuth]);
+    mEvProtectionActive,
+    setUserProfile, 
+  }), [currentUser, userProfile, isAuthenticated, loadingAuth, mEvProtectionActive]);
 
   return (
     <AuthContext.Provider value={value}>
-      {loadingAuth ? (
-        <div className="flex items-center justify-center min-h-screen bg-background text-text">
-          <p className="text-xl">Loading Authentication...</p>
-        </div>
-      ) : (
-        children 
-      )}
+      {children}
     </AuthContext.Provider>
   );
 };

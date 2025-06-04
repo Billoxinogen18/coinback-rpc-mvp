@@ -18,17 +18,18 @@ import {
   getDocs,
   updateDoc,
   increment,
+  runTransaction
 } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBTee559lASlHD_nS5_UfyrJd2jeh0LoQQ", //  REPLACE WITH YOUR ACTUAL CONFIG
-  authDomain: "wanlive2-1518047494273.firebaseapp.com", //  REPLACE WITH YOUR ACTUAL CONFIG
-  databaseURL: "https://wanlive2-1518047494273.firebaseio.com", //  REPLACE WITH YOUR ACTUAL CONFIG
-  projectId: "wanlive2-1518047494273", //  REPLACE WITH YOUR ACTUAL CONFIG
-  storageBucket: "wanlive2-1518047494273.appspot.com", //  REPLACE WITH YOUR ACTUAL CONFIG
-  messagingSenderId: "673023203315", //  REPLACE WITH YOUR ACTUAL CONFIG
-  appId: "1:673023203315:web:6369e5add0d783f5ee6486", //  REPLACE WITH YOUR ACTUAL CONFIG
-  measurementId: "G-3R2HTDYQY9" //  REPLACE WITH YOUR ACTUAL CONFIG
+  apiKey: "AIzaSyBTee559lASlHD_nS5_UfyrJd2jeh0LoQQ",
+  authDomain: "wanlive2-1518047494273.firebaseapp.com",
+  databaseURL: "https://wanlive2-1518047494273.firebaseio.com",
+  projectId: "wanlive2-1518047494273",
+  storageBucket: "wanlive2-1518047494273.appspot.com",
+  messagingSenderId: "673023203315",
+  appId: "1:673023203315:web:6369e5add0d783f5ee6486",
+  measurementId: "G-3R2HTDYQY9"
 };
 
 let app;
@@ -40,14 +41,13 @@ try {
   app = initializeApp(firebaseConfig);
   auth = getAuth(app);
   db = getFirestore(app);
-  analytics = getAnalytics(app); 
-  console.log("Firebase initialized successfully with provided config.");
+  if (typeof window !== 'undefined') {
+    analytics = getAnalytics(app); 
+  }
+  console.log("Firebase initialized successfully with Coinback credentials.");
 } catch (error) {
-  console.error("Error initializing Firebase with provided config:", error);
-  app = null;
-  auth = null;
-  db = null;
-  analytics = null;
+  console.error("Error initializing Firebase:", error);
+  app = null; auth = null; db = null; analytics = null;
 }
 
 const currentAppId = typeof __app_id !== 'undefined' ? __app_id : firebaseConfig.projectId; 
@@ -58,13 +58,8 @@ const getUserTransactionsPath = (userId) => `${getUserDataPath(userId)}/transact
 const getUserRewardsPath = (userId) => `${getUserDataPath(userId)}/rewards`;
 
 const ensureAuthenticated = async () => {
-  if (!auth) {
-    console.error("Firebase Auth is not initialized.");
-    return null;
-  }
-  if (auth.currentUser) {
-    return auth.currentUser;
-  }
+  if (!auth) return null;
+  if (auth.currentUser) return auth.currentUser;
   return new Promise((resolve, reject) => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       unsubscribe(); 
@@ -73,80 +68,128 @@ const ensureAuthenticated = async () => {
       } else {
         try {
           if (initialAuthToken) {
-            console.log("Attempting to sign in with custom token...");
             const userCredential = await signInWithCustomToken(auth, initialAuthToken);
             resolve(userCredential.user);
           } else {
-            console.log("No custom token, attempting to sign in anonymously...");
             const userCredential = await signInAnonymously(auth);
             resolve(userCredential.user);
           }
         } catch (error) {
-          console.error("Error during sign-in attempt:", error);
+          console.error("Firebase sign-in error:", error);
           reject(error);
         }
       }
     }, (error) => { 
-      console.error("Auth state change error:", error);
+      console.error("Firebase auth state error:", error);
       reject(error);
     });
   });
 };
 
 const getUserProfile = async (userId) => {
-  if (!db || !userId) {
-    console.error("Firestore DB not initialized or no User ID provided for getUserProfile.");
-    return null;
-  }
+  if (!db || !userId) return null;
   try {
-    const userDocRef = doc(db, getUserDataPath(userId), 'profile');
+    const userDocRef = doc(db, getUserDataPath(userId)); 
     const docSnap = await getDoc(userDocRef);
+    let profileData;
     if (docSnap.exists()) {
-      return { id: docSnap.id, ...docSnap.data() };
+      profileData = { id: docSnap.id, ...docSnap.data() };
     } else {
-      const profileData = {
+      profileData = {
         userId: userId,
         createdAt: serverTimestamp(),
         lastLogin: serverTimestamp(),
-        rpcConfigured: false, 
+        rpcConfigured: false,
+        cbkBalance: 50000, 
+        stakedCbk: 0,
+        transactionCredits: 0,
+        mEvProtectionActive: true, 
       };
       await setDoc(userDocRef, profileData);
-      return profileData;
     }
+    profileData.cbkBalance = typeof profileData.cbkBalance === 'number' ? profileData.cbkBalance : 50000;
+    profileData.stakedCbk = typeof profileData.stakedCbk === 'number' ? profileData.stakedCbk : 0;
+    profileData.transactionCredits = typeof profileData.transactionCredits === 'number' ? profileData.transactionCredits : 0;
+    profileData.mEvProtectionActive = typeof profileData.mEvProtectionActive === 'boolean' ? profileData.mEvProtectionActive : true;
+    return profileData;
   } catch (error) {
-    console.error("Error getting/creating user profile for " + userId + ":", error);
+    console.error("Error getting/creating user profile:", error);
     return null;
   }
 };
 
 const updateUserProfile = async (userId, data) => {
-  if (!db || !userId) {
-    console.error("Firestore DB not initialized or no User ID provided for updateUserProfile.");
-    return false;
-  }
+  if (!db || !userId) return false;
   try {
-    const userDocRef = doc(db, getUserDataPath(userId), 'profile');
+    const userDocRef = doc(db, getUserDataPath(userId)); 
     await setDoc(userDocRef, { ...data, updatedAt: serverTimestamp() }, { merge: true });
     return true;
   } catch (error) {
-    console.error("Error updating user profile for " + userId + ":", error);
+    console.error("Error updating user profile:", error);
     return false;
   }
 };
 
-const addSimulatedTransaction = async (userId, transactionData) => {
-  if (!db || !userId) {
-    console.error("Firestore DB not initialized or no User ID provided for addSimulatedTransaction.");
-    return null;
+const stakeCbkTokens = async (userId, amountToStake) => {
+  if (!db || !userId || typeof amountToStake !== 'number' || amountToStake <= 0) {
+    return { success: false, message: "Invalid stake amount." };
   }
+  const userProfileRef = doc(db, getUserDataPath(userId)); 
+  try {
+    await runTransaction(db, async (transaction) => {
+      const profileSnap = await transaction.get(userProfileRef);
+      if (!profileSnap.exists()) throw "User profile not found.";
+      const currentBalance = profileSnap.data().cbkBalance || 0;
+      if (amountToStake > currentBalance) throw "Insufficient CBK balance.";
+      
+      transaction.update(userProfileRef, {
+        cbkBalance: increment(-amountToStake),
+        stakedCbk: increment(amountToStake),
+        updatedAt: serverTimestamp(),
+      });
+    });
+    return { success: true, message: `${amountToStake} CBK staked successfully.` };
+  } catch (error) {
+    console.error("Error staking CBK tokens:", error);
+    return { success: false, message: typeof error === 'string' ? error : "Staking failed due to a server error." };
+  }
+};
+
+const unstakeCbkTokens = async (userId, amountToUnstake) => {
+  if (!db || !userId || typeof amountToUnstake !== 'number' || amountToUnstake <= 0) {
+    return { success: false, message: "Invalid unstake amount." };
+  }
+  const userProfileRef = doc(db, getUserDataPath(userId)); 
+  try {
+    await runTransaction(db, async (transaction) => {
+      const profileSnap = await transaction.get(userProfileRef);
+      if (!profileSnap.exists()) throw "User profile not found.";
+      const currentStaked = profileSnap.data().stakedCbk || 0;
+      if (amountToUnstake > currentStaked) throw "Amount exceeds staked CBK.";
+
+      transaction.update(userProfileRef, {
+        cbkBalance: increment(amountToUnstake),
+        stakedCbk: increment(-amountToUnstake),
+        updatedAt: serverTimestamp(),
+      });
+    });
+    return { success: true, message: `${amountToUnstake} CBK unstaked successfully.` };
+  } catch (error) {
+    console.error("Error unstaking CBK tokens:", error);
+    return { success: false, message: typeof error === 'string' ? error : "Unstaking failed due to a server error." };
+  }
+};
+
+const addSimulatedTransaction = async (userId, transactionData) => {
+  if (!db || !userId) return null;
   try {
     const transactionsColRef = collection(db, getUserTransactionsPath(userId));
     const newTransaction = {
       ...transactionData,
       userId: userId,
       timestamp: serverTimestamp(),
-      processedByBuilder: Math.random() > 0.1, 
-      profitShareContributed: Math.random() * 0.001 
+      processedByBuilder: Math.random() > 0.05, 
+      profitShareContributed: Math.random() * 0.0005 + 0.0001 
     };
     const docRef = await addDoc(transactionsColRef, newTransaction);
     
@@ -156,18 +199,22 @@ const addSimulatedTransaction = async (userId, transactionData) => {
         lastTransactionAt: serverTimestamp()
     }, { merge: true }); 
 
+    const userProfile = await getUserProfile(userId);
+    if (userProfile && userProfile.stakedCbk >= 30000) {
+        const profileRef = doc(db, getUserDataPath(userId)); 
+        await updateDoc(profileRef, {
+            transactionCredits: increment(1)
+        });
+    }
     return { id: docRef.id, ...newTransaction }; 
   } catch (error) {
-    console.error("Error adding simulated transaction for " + userId + ":", error);
+    console.error("Error adding transaction:", error);
     return null;
   }
 };
 
 const getSimulatedTransactions = async (userId) => {
-  if (!db || !userId) {
-    console.error("Firestore DB not initialized or no User ID provided for getSimulatedTransactions.");
-    return [];
-  }
+  if (!db || !userId) return [];
   try {
     const transactionsColRef = collection(db, getUserTransactionsPath(userId));
     const q = query(transactionsColRef); 
@@ -178,101 +225,109 @@ const getSimulatedTransactions = async (userId) => {
     });
     return transactions.sort((a,b) => (b.timestamp?.toDate?.() || 0) - (a.timestamp?.toDate?.() || 0));
   } catch (error) {
-    console.error("Error getting simulated transactions for " + userId + ":", error);
+    console.error("Error getting transactions:", error);
     return [];
   }
 };
 
 const getUserRewards = async (userId) => {
-  if (!db || !userId) {
-    console.error("Firestore DB not initialized or no User ID provided for getUserRewards.");
-    return { totalEarned: 0, lastClaimed: null, claimable: 0 };
-  }
+  if (!db || !userId) return { totalEarned: 0, lastClaimed: null, claimable: 0, transactionCreditsDisplay: 0 };
   try {
     const rewardsDocRef = doc(db, getUserRewardsPath(userId), 'summary');
-    const docSnap = await getDoc(rewardsDocRef);
-    if (docSnap.exists()) {
-      return { id: docSnap.id, ...docSnap.data() };
+    const rewardsSnap = await getDoc(rewardsDocRef);
+    
+    const userProfile = await getUserProfile(userId);
+    const transactionCreditsDisplay = userProfile?.transactionCredits || 0;
+
+    if (rewardsSnap.exists()) {
+      return { id: rewardsSnap.id, ...rewardsSnap.data(), transactionCreditsDisplay };
     } else {
       const initialRewards = { 
         totalEarned: 0, 
         lastClaimed: null, 
         claimable: 0, 
         userId: userId,
-        createdAt: serverTimestamp()
+        createdAt: serverTimestamp(),
+        transactionCreditsDisplay: transactionCreditsDisplay
       };
       await setDoc(rewardsDocRef, initialRewards);
       return initialRewards;
     }
   } catch (error) {
-    console.error("Error getting user rewards for " + userId + ":", error);
-    return { totalEarned: 0, lastClaimed: null, claimable: 0 }; 
+    console.error("Error getting user rewards:", error);
+    return { totalEarned: 0, lastClaimed: null, claimable: 0, transactionCreditsDisplay: 0 }; 
   }
 };
 
-const simulateBuilderProfitDistribution = async (userId, amount) => {
-  if (!db || !userId || typeof amount !== 'number' || amount <= 0) {
-    console.error("Invalid parameters for simulateBuilderProfitDistribution.");
-    return false;
+const simulateBuilderProfitDistribution = async (userId, baseAmount) => {
+  if (!db || !userId || typeof baseAmount !== 'number' || baseAmount <= 0) {
+    return { success: false, message: "Invalid distribution parameters."};
   }
   try {
     const rewardsDocRef = doc(db, getUserRewardsPath(userId), 'summary');
+    let distributedAmount = baseAmount;
+
+    const userProfile = await getUserProfile(userId);
+    if (userProfile && userProfile.transactionCredits > 0) {
+        const creditBonusFactor = Math.min(0.5, (userProfile.transactionCredits / 10) * 0.1);
+        distributedAmount += baseAmount * creditBonusFactor;
+    }
+    
+    if (userProfile) {
+        const profileRef = doc(db, getUserDataPath(userId)); 
+        await updateDoc(profileRef, { transactionCredits: 0, updatedAt: serverTimestamp() });
+    }
+
     await setDoc(rewardsDocRef, {
-      claimable: increment(amount),
-      totalEarned: increment(amount),
+      claimable: increment(distributedAmount),
+      totalEarned: increment(distributedAmount),
       lastDistributionAt: serverTimestamp()
     }, { merge: true }); 
-    return true;
+    return { success: true, amountDistributed: distributedAmount };
   } catch (error) {
-    console.error("Error simulating builder profit distribution for " + userId + ":", error);
-    return false;
+    console.error("Error distributing profits:", error);
+    return { success: false, message: "Profit distribution failed."};
   }
 };
 
 const claimUserRewards = async (userId, claimAmount) => {
   if (!db || !userId || typeof claimAmount !== 'number' || claimAmount <= 0) {
-    console.error("Invalid parameters for claimUserRewards.");
-    return { success: false, message: "Invalid claim request." };
+    return { success: false, message: "Invalid claim amount." };
   }
+  const rewardsDocRef = doc(db, getUserRewardsPath(userId), 'summary');
   try {
-    const rewardsDocRef = doc(db, getUserRewardsPath(userId), 'summary');
-    const currentRewardsData = await getUserRewards(userId); 
+    await runTransaction(db, async (transaction) => {
+      const rewardsSnap = await transaction.get(rewardsDocRef);
+      if (!rewardsSnap.exists()) throw "Rewards data not found.";
+      
+      const currentClaimable = rewardsSnap.data().claimable || 0;
+      if (currentClaimable < claimAmount) throw "Insufficient claimable balance.";
 
-    if (!currentRewardsData || currentRewardsData.claimable < claimAmount) {
-      console.error("Attempting to claim more than available or rewards data missing.");
-      return { success: false, message: "Insufficient claimable balance or error fetching rewards." };
-    }
+      transaction.update(rewardsDocRef, {
+        claimable: increment(-claimAmount), 
+        lastClaimed: serverTimestamp(),
+      });
 
-    await updateDoc(rewardsDocRef, {
-      claimable: increment(-claimAmount), 
-      lastClaimed: serverTimestamp(),
+      const claimsColRef = collection(db, getUserRewardsPath(userId), 'claims');
+      transaction.set(doc(claimsColRef), { 
+          userId: userId,
+          amountClaimed: claimAmount,
+          timestamp: serverTimestamp()
+      });
     });
-
-    const claimsColRef = collection(db, getUserRewardsPath(userId), 'claims');
-    await addDoc(claimsColRef, {
-        userId: userId,
-        amountClaimed: claimAmount,
-        timestamp: serverTimestamp()
-    });
-    return { success: true, message: `Successfully claimed ${claimAmount.toFixed(5)} ETH (simulated).` };
+    return { success: true, message: `Successfully claimed ${claimAmount.toFixed(5)} ETH.` };
   } catch (error) {
-    console.error("Error claiming user rewards for " + userId + ":", error);
-    return { success: false, message: "An error occurred during the claim process." };
+    console.error("Error claiming user rewards:", error);
+    return { success: false, message: typeof error === 'string' ? error : "Claim process failed." };
   }
 };
 
 export {
-  app,
-  auth, 
-  db,   
-  analytics,
+  app, auth, db, analytics,
   ensureAuthenticated,
-  getUserProfile,
-  updateUserProfile,
-  addSimulatedTransaction,
-  getSimulatedTransactions,
-  getUserRewards,
-  simulateBuilderProfitDistribution,
-  claimUserRewards,
+  getUserProfile, updateUserProfile,
+  stakeCbkTokens, unstakeCbkTokens,
+  addSimulatedTransaction, getSimulatedTransactions,
+  getUserRewards, simulateBuilderProfitDistribution, claimUserRewards,
   onAuthStateChanged 
 };

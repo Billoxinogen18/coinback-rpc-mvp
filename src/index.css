@@ -6,4 +6,75 @@ body {
   font-family: 'Inter', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  @apply bg-bgBase text-textPrimary;
+}
+
+.glassmorphic {
+  @apply bg-glassOverlay backdrop-blur-md border border-glassBorder shadow-glass rounded-neo-lg;
+}
+
+.neumorphic-outset {
+  @apply bg-surface shadow-neo-outset rounded-neo-lg;
+}
+.neumorphic-inset {
+  @apply bg-surface shadow-neo-inset rounded-neo-lg;
+}
+.neumorphic-outset-sm {
+  @apply bg-surface shadow-neo-outset-sm rounded-neo;
+}
+.neumorphic-inset-sm {
+  @apply bg-surface shadow-neo-inset-sm rounded-neo;
+}
+.neumorphic-outset-xs {
+  @apply bg-surface shadow-neo-outset-xs rounded-neo-sm;
+}
+.neumorphic-inset-xs {
+  @apply bg-surface shadow-neo-inset-xs rounded-neo-sm;
+}
+
+.neumorphic-button {
+  @apply px-6 py-3 font-semibold text-textPrimary shadow-neo-outset-sm hover:shadow-neo-inset-sm active:shadow-neo-inset-xs rounded-neo transition-all duration-150 ease-in-out disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center space-x-2 bg-surface;
+}
+.neumorphic-button-primary {
+    @apply bg-primary text-white shadow-neo-outset-sm hover:shadow-neo-inset-sm active:shadow-neo-inset-xs;
+}
+.neumorphic-button-accent {
+    @apply bg-accent text-bgBase shadow-neo-outset-sm hover:shadow-neo-inset-sm active:shadow-neo-inset-xs;
+}
+
+.neumorphic-input {
+  @apply w-full p-3 bg-surface shadow-neo-inset-sm rounded-neo border-transparent focus:shadow-neo-inset-xs focus:outline-none transition-shadow duration-150 ease-in-out text-textPrimary placeholder-textSecondary;
+}
+
+.card-base {
+  @apply p-6 animate-fadeIn;
+}
+
+.info-box {
+  @apply p-4 rounded-neo text-sm mt-4;
+}
+.info-box-blue {
+  @apply bg-blueHighlight/10 border border-blueHighlight/20 text-blueHighlight/90;
+}
+.info-box-yellow {
+  @apply bg-yellowHighlight/10 border border-yellowHighlight/20 text-yellowHighlight/90;
+}
+.info-box-indigo {
+  @apply bg-indigoHighlight/10 border border-indigoHighlight/20 text-indigoHighlight/90;
+}
+.info-box-red {
+    @apply bg-redHighlight/10 border border-redHighlight/20 text-redHighlight/90;
+}
+.info-box-green {
+    @apply bg-greenHighlight/10 border border-greenHighlight/20 text-greenHighlight/90;
+}
+
+.table-header {
+    @apply px-5 py-3 text-left text-xs font-semibold text-textSecondary uppercase tracking-wider bg-surface shadow-neo-inset-xs;
+}
+.table-cell {
+    @apply px-5 py-4 whitespace-nowrap text-sm text-textPrimary bg-surface shadow-neo-outset-xs;
+}
+.table-row-hover {
+    @apply hover:shadow-neo-inset-xs transition-shadow duration-150;
 }

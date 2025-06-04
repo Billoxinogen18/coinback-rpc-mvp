@@ -42,3 +42,4 @@ coverage
 # Vite specific
 .vite
 /public/mockServiceWorker.js
+.vercel
