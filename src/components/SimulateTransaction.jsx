@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { sendMockTransaction } from '../services/mockRpcService';
 import { Send, Zap, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
-
+//legacy files
 const SimulateTransaction = ({ onTransactionSimulated }) => {
   const { userId, isAuthenticated } = useAuth();
   const [isSimulating, setIsSimulating] = useState(false);
