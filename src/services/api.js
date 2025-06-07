@@ -45,8 +45,8 @@ export const getSiweNonce = (walletAddress) => {
   return request(`/users/${walletAddress}/siwe-nonce`, { method: 'GET' });
 };
 
-export const verifySiweSignature = (walletAddress, message, signature) => {
-  return request(`/users/${walletAddress}/siwe-verify`, {
+export const verifySiweSignature = (message, signature) => {
+  return request(`/users/siwe/verify`, {
     method: 'POST',
     body: JSON.stringify({ message, signature }),
   });
