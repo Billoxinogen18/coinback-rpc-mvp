@@ -34,7 +34,7 @@ export const AuthProvider = ({ children }) => {
       setIsAuthenticated(true);
     } catch (error) {
       console.error("Failed to fetch user profile", error);
-      clearSession(); // Clear session if profile fetch fails
+      clearSession();
     } finally {
       setLoadingAuth(false);
     }
@@ -51,21 +51,16 @@ export const AuthProvider = ({ children }) => {
   const signInWithEthereum = async (provider, address) => {
     setLoadingAuth(true);
     try {
-      if (!provider || !address) {
-        throw new Error("Wallet is not connected.");
-      }
       const signer = await provider.getSigner();
       const chainId = (await provider.getNetwork()).chainId;
 
-      // 1. Get nonce from backend
       const { nonce } = await getSiweNonce(address);
-      if (!nonce) throw new Error("Failed to get a sign-in nonce from the server.");
+      if (!nonce) throw new Error("Failed to get a sign-in nonce.");
 
-      // 2. Create SIWE message with the nonce
       const siweMessage = new SiweMessage({
         domain: window.location.host,
-        address,
-        statement: 'Sign in to Coinback RPC to access your dashboard.',
+        address: address,
+        statement: 'Sign in to Coinback RPC to access your rewards.',
         uri: window.location.origin,
         version: '1',
         chainId,
@@ -73,14 +68,10 @@ export const AuthProvider = ({ children }) => {
       });
       const messageToSign = siweMessage.prepareMessage();
 
-      // 3. Sign message
       const signature = await signer.signMessage(messageToSign);
 
-      // 4. Verify signature with backend and get JWT
       const { success, token, user, message: verifyMsg } = await verifySiweSignature(messageToSign, signature);
-      if (!success || !token) {
-          throw new Error(verifyMsg || "Signature verification failed on the server.");
-      }
+      if (!success || !token) throw new Error(verifyMsg || "Verification failed.");
       
       localStorage.setItem('coinback_jwt', token);
       setBackendJwt(token);
@@ -104,10 +95,8 @@ export const AuthProvider = ({ children }) => {
     loadingAuth,
     signInWithEthereum,
     signOut: clearSession,
-    refreshUserProfile: () => { if (backendJwt) fetchUserProfile(backendJwt); },
+    refreshUserProfile: () => fetchUserProfile(backendJwt),
     userId: userProfile?.user_id || null,
-    // Add other necessary values if they were in the original
-    mEvProtectionActive: userProfile?.mev_protection_active ?? true, 
   }), [walletAddress, userProfile, isAuthenticated, loadingAuth, backendJwt, signInWithEthereum, clearSession, fetchUserProfile]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
