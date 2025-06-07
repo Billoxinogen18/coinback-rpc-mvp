@@ -51,18 +51,21 @@ export const AuthProvider = ({ children }) => {
   const signInWithEthereum = async (provider, address) => {
     setLoadingAuth(true);
     try {
+      if (!provider || !address) {
+        throw new Error("Wallet is not connected.");
+      }
       const signer = await provider.getSigner();
       const chainId = (await provider.getNetwork()).chainId;
 
       // 1. Get nonce from backend
       const { nonce } = await getSiweNonce(address);
-      if (!nonce) throw new Error("Failed to get a sign-in nonce.");
+      if (!nonce) throw new Error("Failed to get a sign-in nonce from the server.");
 
       // 2. Create SIWE message with the nonce
       const siweMessage = new SiweMessage({
         domain: window.location.host,
-        address: address,
-        statement: 'Sign in to Coinback RPC to access your rewards.',
+        address,
+        statement: 'Sign in to Coinback RPC to access your dashboard.',
         uri: window.location.origin,
         version: '1',
         chainId,
@@ -75,11 +78,13 @@ export const AuthProvider = ({ children }) => {
 
       // 4. Verify signature with backend and get JWT
       const { success, token, user, message: verifyMsg } = await verifySiweSignature(messageToSign, signature);
-      if (!success || !token) throw new Error(verifyMsg || "Verification failed.");
+      if (!success || !token) {
+          throw new Error(verifyMsg || "Signature verification failed on the server.");
+      }
       
       localStorage.setItem('coinback_jwt', token);
       setBackendJwt(token);
-      setUserProfile(user); // Set user profile from the successful response
+      setUserProfile(user);
       setIsAuthenticated(true);
       toast.success("Successfully signed in!");
 
@@ -99,8 +104,10 @@ export const AuthProvider = ({ children }) => {
     loadingAuth,
     signInWithEthereum,
     signOut: clearSession,
-    refreshUserProfile: () => fetchUserProfile(backendJwt),
+    refreshUserProfile: () => { if (backendJwt) fetchUserProfile(backendJwt); },
     userId: userProfile?.user_id || null,
+    // Add other necessary values if they were in the original
+    mEvProtectionActive: userProfile?.mev_protection_active ?? true, 
   }), [walletAddress, userProfile, isAuthenticated, loadingAuth, backendJwt, signInWithEthereum, clearSession, fetchUserProfile]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
