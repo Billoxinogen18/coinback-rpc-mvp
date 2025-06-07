@@ -25,6 +25,7 @@ const SimulateTransaction = ({ onTransactionSimulated }) => {
     if (amount > 1000) {
         toast.error("Amount too high for this demonstration. Please use a smaller value.");
         return;
+        
     }
 
     setIsSimulating(true);
