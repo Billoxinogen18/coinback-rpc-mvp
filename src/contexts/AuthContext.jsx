@@ -57,7 +57,7 @@ export const AuthProvider = ({ children }) => {
     }
     console.groupEnd();
   }, [clearSession, walletAddress]);
-
+  
   const autoConnectAndRefresh = useCallback(async () => {
     console.group('%cAuthContext: autoConnectAndRefresh', 'color: teal;');
     setLoadingAuth(true);
@@ -101,7 +101,7 @@ export const AuthProvider = ({ children }) => {
       const signer = await provider.getSigner();
       const network = await provider.getNetwork();
       console.log('Step 2: Got signer and network from MetaMask', { signer, network });
-      
+
       const checksumAddress = ethers.getAddress(address);
       const normalizedAddress = address.toLowerCase();
       console.log('Step 3: Prepared addresses', { checksumAddress, normalizedAddress });
@@ -111,11 +111,11 @@ export const AuthProvider = ({ children }) => {
       if (!nonce) throw new Error("Could not retrieve nonce from server.");
       console.log('Step 5: Fetched nonce from backend', { nonce });
 
-      // --- THE FINAL, DEFINITIVE FIX ---
-      // Hardcode the chainId to Sepolia (11155111) to match your backend and contract deployments.
-      // This prevents errors if the user's wallet is set to a different network (like BSC Mainnet).
-      const expectedChainId = 11155111;
-      console.log(`Step 6: Forcing chainId to ${expectedChainId} (Sepolia) for SIWE message.`);
+      // --- THE FINAL, FINAL FIX ---
+      // In ethers v6, network.chainId is a BigInt. The siwe library needs a Number.
+      // We explicitly convert it here.
+      const chainIdAsNumber = Number(network.chainId);
+      console.log(`Step 6: Converted chainId from BigInt to Number.`, { original: network.chainId, converted: chainIdAsNumber });
       
       const siweMessage = new SiweMessage({
         domain: window.location.host,
@@ -123,7 +123,7 @@ export const AuthProvider = ({ children }) => {
         statement: 'Sign in to Coinback RPC to access your dashboard.',
         uri: window.location.origin,
         version: '1',
-        chainId: expectedChainId, // Use the correct, hardcoded chainId
+        chainId: chainIdAsNumber, // Use the converted Number
         nonce,
       });
       console.log('Step 7: Created SIWE message object', siweMessage);
