@@ -91,7 +91,7 @@ export const AuthProvider = ({ children }) => {
     console.log('%cAuthContext: Initial mount effect running autoConnectAndRefresh...', 'color: gray;');
     autoConnectAndRefresh();
   }, [autoConnectAndRefresh]);
-
+  
   const signInWithEthereum = async (provider, address) => {
     console.group('%cAuthContext: signInWithEthereum', 'font-weight: bold; color: blue;');
     setLoadingAuth(true);
@@ -100,13 +100,9 @@ export const AuthProvider = ({ children }) => {
     try {
       const signer = await provider.getSigner();
       const network = await provider.getNetwork();
-      console.log('Step 2: Got signer and network', { signer, network });
+      console.log('Step 2: Got signer and network from MetaMask', { signer, network });
       
-      // --- THE FINAL FIX IS HERE ---
-      // Use ethers.getAddress() to get the proper EIP-55 checksum address.
-      // This is what the siwe library EXPECTS.
       const checksumAddress = ethers.getAddress(address);
-      // Use toLowerCase() for our own API calls to the backend to ensure consistency.
       const normalizedAddress = address.toLowerCase();
       console.log('Step 3: Prepared addresses', { checksumAddress, normalizedAddress });
       
@@ -114,38 +110,43 @@ export const AuthProvider = ({ children }) => {
       const { nonce } = await getSiweNonce(normalizedAddress);
       if (!nonce) throw new Error("Could not retrieve nonce from server.");
       console.log('Step 5: Fetched nonce from backend', { nonce });
+
+      // --- THE FINAL, DEFINITIVE FIX ---
+      // Hardcode the chainId to Sepolia (11155111) to match your backend and contract deployments.
+      // This prevents errors if the user's wallet is set to a different network (like BSC Mainnet).
+      const expectedChainId = 11155111;
+      console.log(`Step 6: Forcing chainId to ${expectedChainId} (Sepolia) for SIWE message.`);
       
       const siweMessage = new SiweMessage({
         domain: window.location.host,
-        // Provide the CHECKSUM address to the SiweMessage constructor.
         address: checksumAddress,
         statement: 'Sign in to Coinback RPC to access your dashboard.',
         uri: window.location.origin,
         version: '1',
-        chainId: Number(network.chainId),
+        chainId: expectedChainId, // Use the correct, hardcoded chainId
         nonce,
       });
-      console.log('Step 6: Created SIWE message object', siweMessage);
+      console.log('Step 7: Created SIWE message object', siweMessage);
 
       const messageToSign = siweMessage.prepareMessage();
-      console.log('Step 7: Prepared message for signing. Prompting user...', { messageToSign });
+      console.log('Step 8: Prepared message for signing. Prompting user...', { messageToSign });
 
       const signature = await signer.signMessage(messageToSign);
-      console.log('Step 8: User signed message, got signature', { signature });
+      console.log('Step 9: User signed message, got signature', { signature });
       
-      console.log('Step 9: Sending message and signature to backend for verification...');
+      console.log('Step 10: Sending message and signature to backend for verification...');
       const verificationResponse = await verifySiweSignature(siweMessage, signature);
-      console.log('Step 10: Received verification response from backend', verificationResponse);
+      console.log('Step 11: Received verification response from backend', verificationResponse);
 
       if (!verificationResponse.success || !verificationResponse.token) {
         throw new Error(verificationResponse.message || "Signature verification failed on backend.");
       }
 
-      console.log('Step 11: Verification successful. Storing JWT.');
+      console.log('Step 12: Verification successful. Storing JWT.');
       localStorage.setItem('coinback_jwt', verificationResponse.token);
       setWalletAddress(address);
       
-      console.log('Step 12: Refreshing user profile with new token...');
+      console.log('Step 13: Refreshing user profile with new token...');
       await refreshUserProfile();
       
       console.log('%c--- Sign-In Process Successful ---', 'font-weight: bold; color: green;');
