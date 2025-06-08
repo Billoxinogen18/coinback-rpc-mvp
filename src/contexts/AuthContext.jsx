@@ -20,23 +20,34 @@ export const AuthProvider = ({ children }) => {
   const [walletAddress, setWalletAddress] = useState(null);
 
   const clearSession = useCallback(() => {
+    console.group('%cAuthContext: clearSession', 'color: orange;');
+    console.log('Clearing session: Removing JWT and resetting state.');
     localStorage.removeItem('coinback_jwt');
     setIsAuthenticated(false);
     setUserProfile(null);
+    console.groupEnd();
   }, []);
 
   const refreshUserProfile = useCallback(async () => {
+    console.group('%cAuthContext: refreshUserProfile', 'color: purple;');
     const token = localStorage.getItem('coinback_jwt');
+    console.log('Checking for token and wallet address...', { hasToken: !!token, walletAddress });
+
     if (!token || !walletAddress) {
+        console.log('Token or address missing, clearing session.');
         setIsAuthenticated(false);
         setUserProfile(null);
+        console.groupEnd();
         return;
     };
     try {
+      console.log('Fetching user profile from backend...');
       const profileData = await getUserProfile();
+      console.log('Received profile data from backend:', profileData);
       if (profileData && profileData.user_id) {
         setUserProfile(profileData);
         setIsAuthenticated(true);
+        console.log('Profile refresh successful, user is authenticated.');
       } else {
         throw new Error("Invalid profile data received");
       }
@@ -44,47 +55,60 @@ export const AuthProvider = ({ children }) => {
       console.error("Profile refresh failed:", error.message);
       clearSession();
     }
+    console.groupEnd();
   }, [clearSession, walletAddress]);
   
   const autoConnectAndRefresh = useCallback(async () => {
+    console.group('%cAuthContext: autoConnectAndRefresh', 'color: teal;');
     setLoadingAuth(true);
     const token = localStorage.getItem('coinback_jwt');
     try {
         if (!window.ethereum) throw new Error("No wallet detected");
+        console.log('Attempting to auto-connect via eth_accounts...');
         const accounts = await window.ethereum.request({ method: 'eth_accounts' });
         const currentAddress = accounts?.[0] || null;
+        console.log('eth_accounts result:', { currentAddress });
         setWalletAddress(currentAddress);
 
         if (token && currentAddress) {
+            console.log('Token and address found, refreshing profile...');
             await refreshUserProfile();
         } else {
+            console.log('Token or address not found, clearing session.');
             clearSession();
         }
     } catch (err) {
       console.error("Auto-connect failed:", err);
       clearSession();
     } finally {
+      console.log('Finished auto-connect. Setting loading to false.');
       setLoadingAuth(false);
     }
+    console.groupEnd();
   }, [refreshUserProfile, clearSession]);
 
   useEffect(() => {
+    console.log('%cAuthContext: Initial mount effect running autoConnectAndRefresh...', 'color: gray;');
     autoConnectAndRefresh();
   }, [autoConnectAndRefresh]);
   
-
   const signInWithEthereum = async (provider, address) => {
+    console.group('%cAuthContext: signInWithEthereum', 'font-weight: bold; color: blue;');
     setLoadingAuth(true);
+    console.log('Step 1: Received provider and address', { provider, address });
+    
     try {
       const signer = await provider.getSigner();
       const network = await provider.getNetwork();
+      console.log('Step 2: Got signer and network', { signer, network });
       
-      // CRITICAL FIX: Normalize address to lowercase for SIWE message
-      // This ensures consistent address format throughout the flow
       const normalizedAddress = address.toLowerCase();
+      console.log('Step 3: Normalized address for SIWE message', { original: address, normalized: normalizedAddress });
       
+      console.log('Step 4: Requesting nonce from backend...');
       const { nonce } = await getSiweNonce(normalizedAddress);
       if (!nonce) throw new Error("Could not retrieve nonce from server.");
+      console.log('Step 5: Fetched nonce from backend', { nonce });
       
       const siweMessage = new SiweMessage({
         domain: window.location.host,
@@ -95,22 +119,39 @@ export const AuthProvider = ({ children }) => {
         chainId: Number(network.chainId),
         nonce,
       });
+      console.log('Step 6: Created SIWE message object', siweMessage);
 
       const messageToSign = siweMessage.prepareMessage();
-      const signature = await signer.signMessage(messageToSign);
-      const { success, token, message } = await verifySiweSignature(siweMessage, signature);
-      if (!success || !token) throw new Error(message || "Signature verification failed.");
+      console.log('Step 7: Prepared message for signing. Prompting user...', { messageToSign });
 
-      localStorage.setItem('coinback_jwt', token);
-      setWalletAddress(address); // Keep original address for display
+      const signature = await signer.signMessage(messageToSign);
+      console.log('Step 8: User signed message, got signature', { signature });
+      
+      console.log('Step 9: Sending message and signature to backend for verification...');
+      const verificationResponse = await verifySiweSignature(siweMessage, signature);
+      console.log('Step 10: Received verification response from backend', verificationResponse);
+
+      if (!verificationResponse.success || !verificationResponse.token) {
+        throw new Error(verificationResponse.message || "Signature verification failed on backend.");
+      }
+
+      console.log('Step 11: Verification successful. Storing JWT.');
+      localStorage.setItem('coinback_jwt', verificationResponse.token);
+      setWalletAddress(address); // Keep original checksum address for display
+      
+      console.log('Step 12: Refreshing user profile with new token...');
       await refreshUserProfile();
+      
+      console.log('%c--- Sign-In Process Successful ---', 'font-weight: bold; color: green;');
       toast.success("Sign-in successful!");
     } catch (error) {
-      console.error(error); // Log the full error for better debugging
+      console.error('%c--- Sign-In Process FAILED ---', 'font-weight: bold; color: red;');
+      console.error('Full error object:', error);
       toast.error(`Sign-In failed: ${error.message || 'An unknown error occurred.'}`);
       clearSession();
     } finally {
       setLoadingAuth(false);
+      console.groupEnd();
     }
   };
   
