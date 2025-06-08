@@ -57,7 +57,7 @@ export const AuthProvider = ({ children }) => {
     }
     console.groupEnd();
   }, [clearSession, walletAddress]);
-  
+
   const autoConnectAndRefresh = useCallback(async () => {
     console.group('%cAuthContext: autoConnectAndRefresh', 'color: teal;');
     setLoadingAuth(true);
@@ -91,7 +91,7 @@ export const AuthProvider = ({ children }) => {
     console.log('%cAuthContext: Initial mount effect running autoConnectAndRefresh...', 'color: gray;');
     autoConnectAndRefresh();
   }, [autoConnectAndRefresh]);
-  
+
   const signInWithEthereum = async (provider, address) => {
     console.group('%cAuthContext: signInWithEthereum', 'font-weight: bold; color: blue;');
     setLoadingAuth(true);
@@ -102,17 +102,23 @@ export const AuthProvider = ({ children }) => {
       const network = await provider.getNetwork();
       console.log('Step 2: Got signer and network', { signer, network });
       
+      // --- THE FINAL FIX IS HERE ---
+      // Use ethers.getAddress() to get the proper EIP-55 checksum address.
+      // This is what the siwe library EXPECTS.
+      const checksumAddress = ethers.getAddress(address);
+      // Use toLowerCase() for our own API calls to the backend to ensure consistency.
       const normalizedAddress = address.toLowerCase();
-      console.log('Step 3: Normalized address for SIWE message', { original: address, normalized: normalizedAddress });
+      console.log('Step 3: Prepared addresses', { checksumAddress, normalizedAddress });
       
-      console.log('Step 4: Requesting nonce from backend...');
+      console.log('Step 4: Requesting nonce from backend using LOWERCASE address...');
       const { nonce } = await getSiweNonce(normalizedAddress);
       if (!nonce) throw new Error("Could not retrieve nonce from server.");
       console.log('Step 5: Fetched nonce from backend', { nonce });
       
       const siweMessage = new SiweMessage({
         domain: window.location.host,
-        address: normalizedAddress, // Use lowercase address
+        // Provide the CHECKSUM address to the SiweMessage constructor.
+        address: checksumAddress,
         statement: 'Sign in to Coinback RPC to access your dashboard.',
         uri: window.location.origin,
         version: '1',
@@ -137,7 +143,7 @@ export const AuthProvider = ({ children }) => {
 
       console.log('Step 11: Verification successful. Storing JWT.');
       localStorage.setItem('coinback_jwt', verificationResponse.token);
-      setWalletAddress(address); // Keep original checksum address for display
+      setWalletAddress(address);
       
       console.log('Step 12: Refreshing user profile with new token...');
       await refreshUserProfile();
