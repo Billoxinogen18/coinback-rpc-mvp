@@ -5,6 +5,9 @@ import toast from 'react-hot-toast';
 import { getSiweNonce, verifySiweSignature, getUserProfile } from '../services/api';
 import { Buffer } from 'buffer';
 
+// --- VERSION CHECK ---
+console.log('%c--- AUTH_CONTEXT_VERSION_FINAL_1.0 ---', 'background: #222; color: #bada55; font-size: 14px;');
+
 if (typeof window !== 'undefined') {
   window.Buffer = Buffer;
 }
@@ -72,21 +75,18 @@ export const AuthProvider = ({ children }) => {
     autoConnectAndRefresh();
   }, [autoConnectAndRefresh]);
   
-  // FINAL, SIMPLIFIED SIGN-IN FLOW
   const signInWithEthereum = async (provider, address) => {
     setLoadingAuth(true);
     try {
-      // Step 1: Get a fresh nonce from the backend. This is the only place we fetch it.
       const normalizedAddress = address.toLowerCase();
       const { nonce } = await getSiweNonce(normalizedAddress);
       if (!nonce) {
         throw new Error("Could not retrieve a sign-in nonce from the server.");
       }
 
-      // Step 2: Create the SIWE message with the fetched nonce.
       const signer = await provider.getSigner();
       const checksumAddress = ethers.getAddress(address);
-      const expectedChainId = 11155111; // Sepolia Testnet
+      const expectedChainId = 11155111;
 
       const siweMessage = new SiweMessage({
         domain: window.location.host,
@@ -95,10 +95,9 @@ export const AuthProvider = ({ children }) => {
         uri: window.location.origin,
         version: '1',
         chainId: expectedChainId,
-        nonce, // Use the fresh nonce
+        nonce,
       });
 
-      // Step 3: Sign the message and verify on the backend.
       const messageToSign = siweMessage.prepareMessage();
       const signature = await signer.signMessage(messageToSign);
       const verificationResponse = await verifySiweSignature(siweMessage, signature);
@@ -107,7 +106,6 @@ export const AuthProvider = ({ children }) => {
         throw new Error(verificationResponse.message || "Signature verification failed.");
       }
 
-      // Step 4: Complete the login process.
       localStorage.setItem('coinback_jwt', verificationResponse.token);
       setWalletAddress(address);
       await refreshUserProfile();
