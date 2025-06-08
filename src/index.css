@@ -1,0 +1,62 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-bg-base-hsl: 210 20% 98%;
+    --color-surface-hsl: 210 30% 96%;
+    --color-text-primary-hsl: 210 10% 23%;
+    --color-text-secondary-hsl: 210 10% 45%;
+    --color-primary-hsl: 217 91% 60%;
+    --color-accent-hsl: 43 98% 59%;
+    --color-shadow-light-hsl: 210 30% 100%;
+    --color-shadow-dark-hsl: 210 20% 88%;
+    --shadow-light-opacity: 1;
+    --shadow-dark-opacity: 1;
+  }
+ 
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --color-bg-base-hsl: 220 20% 12%;
+      --color-surface-hsl: 220 20% 15%;
+      --color-text-primary-hsl: 210 20% 98%;
+      --color-text-secondary-hsl: 220 10% 65%;
+      --color-primary-hsl: 217 91% 60%;
+      --color-accent-hsl: 43 98% 59%;
+      --color-shadow-light-hsl: 220 20% 18%;
+      --color-shadow-dark-hsl: 220 20% 8%;
+      --shadow-light-opacity: 1;
+      --shadow-dark-opacity: 1;
+    }
+  }
+
+  body {
+    @apply bg-bgBase text-textPrimary;
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+@layer components {
+  .glassmorphic {
+    @apply bg-glassOverlay backdrop-blur-xl border border-glassBorder shadow-glass rounded-t-none;
+  }
+
+  .neumorphic-outset {
+    @apply bg-surface shadow-neo-outset rounded-neo-lg;
+  }
+  
+  .card-base {
+    @apply p-6 lg:p-8 animate-fade-in-up;
+  }
+
+  .neumorphic-button {
+    @apply px-6 py-3 font-semibold shadow-neo-button-default active:shadow-neo-button-active rounded-neo-lg transition-all duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none flex items-center justify-center space-x-2.5;
+  }
+
+  .neumorphic-input {
+    @apply w-full p-3.5 bg-surface shadow-neo-inset rounded-neo text-textPrimary placeholder:text-textSecondary/70 focus:shadow-neo-outset focus:outline-none transition-shadow duration-150 ease-in-out;
+  }
+}

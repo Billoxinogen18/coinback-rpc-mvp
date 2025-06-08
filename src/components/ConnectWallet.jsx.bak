@@ -1,0 +1,81 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import { ethers } from 'ethers';
+import toast from 'react-hot-toast';
+import { Wallet, CheckCircle, LogIn, LogOut, Loader2 } from 'lucide-react';
+
+const ConnectWallet = () => {
+  const { walletAddress, setWalletAddress, isAuthenticated, signInWithEthereum, signOut, loadingAuth } = useAuth();
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [provider, setProvider] = useState(null);
+
+  useEffect(() => {
+    if (window.ethereum) {
+      const web3Provider = new ethers.BrowserProvider(window.ethereum, 'any');
+      setProvider(web3Provider);
+      const handleAccountsChanged = (accounts) => {
+        if (accounts.length > 0) {
+          toast.info("Wallet account changed. Please sign in again.");
+          setWalletAddress(accounts[0]);
+          signOut();
+        } else {
+          toast.info("Wallet disconnected.");
+          signOut();
+          setWalletAddress(null);
+        }
+      };
+      window.ethereum.on('accountsChanged', handleAccountsChanged);
+      return () => window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
+    }
+  }, [setWalletAddress, signOut]);
+
+  const connectWalletAction = useCallback(async () => {
+    if (!window.ethereum) return toast.error('MetaMask or similar wallet not detected.');
+    setIsConnecting(true);
+    try {
+      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      if (accounts.length > 0) {
+        setWalletAddress(accounts[0]);
+      }
+    } catch (e) {
+      toast.error(e.message || "Failed to connect wallet.");
+    } finally {
+      setIsConnecting(false);
+    }
+  }, []);
+  
+  const signInAction = useCallback(() => {
+    if (provider && walletAddress) {
+      signInWithEthereum(provider, walletAddress);
+    }
+  }, [provider, walletAddress, signInWithEthereum]);
+  
+  if (!walletAddress) {
+    return (
+        <button onClick={connectWalletAction} disabled={isConnecting} className="neumorphic-button neumorphic-button-accent">
+            {isConnecting ? <Loader2 size={18} className="animate-spin" /> : <Wallet size={18} />}
+            <span>{isConnecting ? 'Connecting...' : 'Connect Wallet'}</span>
+        </button>
+    );
+  }
+
+  return (
+    <div className="flex items-center space-x-2">
+      <div className="flex items-center space-x-2 px-3 py-2 bg-green-100 text-green-800 rounded-lg text-sm border border-green-200">
+        <CheckCircle size={18} />
+        <span>{`${walletAddress.substring(0, 6)}...${walletAddress.substring(walletAddress.length - 4)}`}</span>
+      </div>
+      {!isAuthenticated ? (
+        <button onClick={signInAction} disabled={loadingAuth} className="neumorphic-button neumorphic-button-primary px-3 py-2 text-sm">
+          {loadingAuth ? <Loader2 size={16} className="animate-spin" /> : <LogIn size={16} />}
+          <span>{loadingAuth ? 'Signing...' : 'Sign In'}</span>
+        </button>
+      ) : (
+        <button onClick={signOut} className="neumorphic-button bg-red-100 text-red-800 px-3 py-2 text-sm">
+          <LogOut size={16} /><span>Sign Out</span>
+        </button>
+      )}
+    </div>
+  );
+};
+export default ConnectWallet;
