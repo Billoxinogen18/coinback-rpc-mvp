@@ -55,8 +55,9 @@
 @layer components {
   /*
     CORRECTION:
-    The build was failing because `@apply` was used with custom theme values like `rounded-card`.
+    The build was failing because `@apply` was used with custom theme values.
     The definitive fix is to apply these custom theme values directly using `theme()` instead of `@apply`.
+    This is the robust, officially recommended way to handle this.
   */
   .glass-header {
     background-color: hsla(var(--color-surface-hsl) / 0.7);
@@ -66,7 +67,8 @@
 
   .card {
     border-radius: theme('borderRadius.card');
-    @apply bg-surface shadow-card p-6 sm:p-8 animate-fade-in-up;
+    box-shadow: theme('boxShadow.card');
+    @apply bg-surface p-6 sm:p-8 animate-fade-in-up;
   }
 
   .btn {
@@ -75,7 +77,11 @@
   }
 
   .btn-primary {
-    @apply btn bg-primary text-white shadow-button hover:bg-blue-500 hover:shadow-button-hover;
+    box-shadow: theme('boxShadow.button');
+    @apply btn bg-primary text-white hover:bg-blue-500;
+  }
+  .btn-primary:hover {
+    box-shadow: theme('boxShadow.button-hover');
   }
 
   .btn-secondary {
@@ -85,6 +91,7 @@
   .input-field {
     height: 58px;
     border-radius: theme('borderRadius.btn');
-    @apply w-full p-4 bg-bgBase shadow-inset-soft text-textPrimary placeholder:text-textSecondary/70 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all duration-200;
+    box-shadow: theme('boxShadow.inset-soft');
+    @apply w-full p-4 bg-bgBase text-textPrimary placeholder:text-textSecondary/70 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all duration-200;
   }
 }
