@@ -88,8 +88,11 @@ const CbkPanel = ({ onAction }) => {
   const [isApproving, setIsApproving] = useState(false);
   const [allowance, setAllowance] = useState(ethers.toBigInt(0));
   
+  // --- DEFINITIVE FIX ---
+  // Source contract addresses from secure, static environment variables.
   const stakingContractAddress = import.meta.env.VITE_STAKING_CONTRACT_ADDRESS;
-  const cbkTokenAddress = userProfile?.cbk_token_address;
+  const cbkTokenAddress = import.meta.env.VITE_CBK_TOKEN_ADDRESS;
+  // --- END OF FIX ---
 
   const getAllowance = useCallback(async () => {
     if (!walletAddress || !cbkTokenAddress || !stakingContractAddress || !window.ethereum) return;
@@ -102,10 +105,11 @@ const CbkPanel = ({ onAction }) => {
   }, [walletAddress, cbkTokenAddress, stakingContractAddress]);
 
   useEffect(() => {
+    // Only run if we have a profile and wallet connected.
     if (userProfile && walletAddress) {
       getAllowance();
     }
-  }, [userProfile, walletAddress, getAllowance, onAction]);
+  }, [userProfile, walletAddress, getAllowance, onAction]); // This will re-run when onAction is called
   
   const needsApproval = useCallback(() => {
     if (!stakeAmount || isNaN(parseFloat(stakeAmount))) return false;
@@ -116,6 +120,11 @@ const CbkPanel = ({ onAction }) => {
   }, [stakeAmount, allowance]);
   
   const handleApprove = async () => {
+    if (!cbkTokenAddress || !stakingContractAddress) {
+        toast.error("App configuration is missing. Please contact support.");
+        return;
+    }
+    
     setIsApproving(true);
     const toastId = toast.loading('Approving token spend...');
     try {
@@ -179,8 +188,10 @@ const CbkPanel = ({ onAction }) => {
     });
   };
   
+  // This prevents the component from rendering with stale or incomplete data
   if (!userProfile) return null;
   
+  // Now these values will be correctly populated from the API response
   const cbkBalanceFormatted = parseFloat(ethers.formatUnits(userProfile.cbk_balance || '0', 18)).toLocaleString(undefined, {maximumFractionDigits: 2});
   const stakedCbkFormatted = parseFloat(ethers.formatUnits(userProfile.staked_cbk || '0', 18)).toLocaleString(undefined, {maximumFractionDigits: 2});
 
@@ -197,7 +208,7 @@ const CbkPanel = ({ onAction }) => {
       </div>
 
       <div className="space-y-6 pt-2">
-        <form onSubmit={handleStake} className="space-y-4">
+        <form onSubmit={e => e.preventDefault()} className="space-y-4">
           <input type="number" value={stakeAmount} onChange={e => setStakeAmount(e.target.value)} className="input-field" placeholder="Amount to stake"/>
           {needsApproval() ? (
             <ButtonWrapper onClick={handleApprove} disabled={isApproving || isProcessing} className="btn-accent w-full">
@@ -205,13 +216,13 @@ const CbkPanel = ({ onAction }) => {
               Approve CBK Spend
             </ButtonWrapper>
           ) : (
-            <ButtonWrapper onClick={handleStake} disabled={isProcessing || !stakeAmount} className="btn-primary w-full">
+            <ButtonWrapper onClick={handleStake} disabled={isProcessing || !stakeAmount || isApproving} className="btn-primary w-full">
               {isProcessing && !isApproving ? <Loader2 className="animate-spin-slow" /> : <ChevronUp size={20} className="icon-neumorphic"/>}
               Stake
             </ButtonWrapper>
           )}
         </form>
-        <form onSubmit={handleUnstake} className="space-y-4">
+        <form onSubmit={e => e.preventDefault()} className="space-y-4">
           <input type="number" value={unstakeAmount} onChange={e => setUnstakeAmount(e.target.value)} className="input-field" placeholder="Amount to unstake"/>
           <ButtonWrapper onClick={handleUnstake} disabled={isProcessing || !unstakeAmount} className="btn-secondary w-full">
             {isProcessing ? <Loader2 className="animate-spin-slow" /> : <ChevronDown size={20} className="icon-neumorphic"/>}
