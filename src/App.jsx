@@ -9,7 +9,6 @@ import { ShieldCheck, Loader2 as GlobalLoader } from 'lucide-react';
 
 function App() {
   const { isAuthenticated, loadingAuth } = useAuth();
-  // State to trigger re-renders on data changes
   const [dataVersion, setDataVersion] = useState(0);
 
   const handleDataChange = () => {
@@ -38,7 +37,7 @@ function App() {
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center h-full py-16 text-center">
-            <div className="card max-w-lg mx-auto">
+            <div className="bg-surface rounded-card shadow-card p-6 sm:p-8 animate-fade-in-up max-w-lg mx-auto">
               <ShieldCheck size={64} className="mx-auto text-primary drop-shadow-glow-primary mb-5" />
               <h2 className="text-3xl font-bold text-textPrimary">Welcome to Coinback RPC</h2>
               <p className="text-textSecondary text-lg mt-3">Your gateway to cashback on every transaction.</p>
