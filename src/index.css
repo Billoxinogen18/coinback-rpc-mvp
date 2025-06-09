@@ -4,71 +4,108 @@
 
 @layer base {
   :root {
-    --color-bg-base-hsl: 226 25% 10%;
-    --color-surface-hsl: 226 25% 15%;
+    --color-bg-base-hsl: 226 20% 12%;
+    --color-surface-hsl: 226 22% 17%;
     --color-text-primary-hsl: 220 25% 95%;
-    --color-text-secondary-hsl: 220 15% 65%;
-    --color-primary-hsl: 230 85% 70%;
-    --color-accent-hsl: 330 85% 70%;
-    --color-shadow-hsl: 226 30% 0%;
-  }
- 
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --color-bg-base-hsl: 226 25% 10%;
-      --color-surface-hsl: 226 25% 15%;
-      --color-text-primary-hsl: 220 25% 95%;
-      --color-text-secondary-hsl: 220 15% 65%;
-      --color-primary-hsl: 230 85% 70%;
-      --color-accent-hsl: 330 85% 70%;
-      --color-shadow-hsl: 226 30% 0%;
-    }
+    --color-text-secondary-hsl: 220 15% 68%;
+    --color-primary-hsl: 235 85% 70%;
+    --color-accent-hsl: 320 80% 65%;
+    --color-shadow-light-hsl: 226 25% 22%;
+    --color-shadow-dark-hsl: 226 40% 6%;
+    
+    --shadow-distance-sm: 4px;
+    --shadow-blur-sm: 8px;
+    --shadow-distance-md: 7px;
+    --shadow-blur-md: 20px;
+    
+    --shadow-out: 
+      var(--shadow-distance-md) var(--shadow-distance-md) var(--shadow-blur-md) hsl(var(--color-shadow-dark-hsl)),
+      calc(var(--shadow-distance-md) * -1) calc(var(--shadow-distance-md) * -1) var(--shadow-blur-md) hsl(var(--color-shadow-light-hsl));
+      
+    --shadow-out-lg: 
+      calc(var(--shadow-distance-md) * 1.5) calc(var(--shadow-distance-md) * 1.5) calc(var(--shadow-blur-md) * 1.5) hsl(var(--color-shadow-dark-hsl)),
+      calc(var(--shadow-distance-md) * -1.5) calc(var(--shadow-distance-md) * -1.5) calc(var(--shadow-blur-md) * 1.5) hsl(var(--color-shadow-light-hsl));
+
+    --shadow-in: 
+      inset var(--shadow-distance-sm) var(--shadow-distance-sm) var(--shadow-blur-sm) hsl(var(--color-shadow-dark-hsl)),
+      inset calc(var(--shadow-distance-sm) * -1) calc(var(--shadow-distance-sm) * -1) var(--shadow-blur-sm) hsl(var(--color-shadow-light-hsl));
   }
 
   body {
-    @apply bg-bgBase text-textPrimary antialiased;
+    @apply bg-bgBase text-textPrimary antialiased selection:bg-primary/30;
     font-family: 'Inter', sans-serif;
     overflow-x: hidden;
+    transition: background-color 0.3s ease;
   }
 
   body::before {
     content: '';
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
     z-index: -1;
-    background: linear-gradient(
-      125deg, 
-      hsla(var(--color-primary-hsl), 0.15), 
-      hsla(var(--color-accent-hsl), 0.15) 35%,
-      hsla(var(--color-primary-hsl), 0.15) 70%,
-      hsla(var(--color-accent-hsl), 0.2)
-    );
-    background-size: 400% 400%;
-    animation: background-pan 30s ease infinite;
+    background: 
+      radial-gradient(ellipse at 80% 15%, hsla(var(--color-primary-hsl), 0.25) 0%, transparent 50%),
+      radial-gradient(ellipse at 20% 85%, hsla(var(--color-accent-hsl), 0.25) 0%, transparent 50%);
+    animation: background-pan 35s ease-in-out infinite alternate;
+    filter: blur(80px);
+    opacity: 0.7;
   }
 }
 
 @layer components {
   .card {
-    @apply bg-glass backdrop-blur-xl border border-glassBorder rounded-card shadow-card p-6 sm:p-8 transition-all duration-300;
+    @apply bg-glass backdrop-blur-2xl rounded-card p-6 sm:p-8;
+    border: 1.5px solid hsla(var(--color-surface-hsl), 0.5);
+    box-shadow: var(--shadow-out);
   }
 
   .btn {
-    @apply flex items-center justify-center gap-2 px-5 py-3 rounded-btn font-semibold transition-all duration-200 focus:outline-none transform active:scale-[0.97] focus:ring-2 focus:ring-offset-2 focus:ring-offset-bgBase focus:ring-primary/50 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply flex items-center justify-center gap-2 px-5 py-3 rounded-btn font-semibold 
+           transition-all duration-200 ease-in-out
+           focus:outline-none focus:ring-2 focus:ring-offset-4 focus:ring-offset-bgBase focus:ring-primary
+           disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none disabled:!bg-surface;
+    background-color: hsl(var(--color-surface-hsl));
+    color: hsl(var(--color-text-secondary-hsl));
+    box-shadow: var(--shadow-out);
+  }
+  .btn:not(:disabled):hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-out-lg);
+    color: hsl(var(--color-text-primary-hsl));
+  }
+  .btn:not(:disabled):active {
+    transform: translateY(1px);
+    box-shadow: var(--shadow-in);
   }
 
   .btn-primary {
-    @apply btn bg-primary text-white shadow-button hover:shadow-button-hover;
+    @apply btn;
+    background-color: hsl(var(--color-primary-hsl));
+    color: white;
   }
-  
-  .btn-secondary {
-    @apply btn bg-surface text-textPrimary shadow-button hover:shadow-button-hover;
+  .btn-primary:not(:disabled):hover {
+    background-color: hsl(var(--color-primary-hsl));
+    filter: brightness(1.15);
+    color: white;
   }
 
+  .btn-secondary {
+    @apply btn;
+    background-color: hsl(var(--color-bgBase));
+  }
+   .btn-secondary:not(:disabled):hover {
+    background-color: hsl(var(--color-surface));
+  }
+  
   .input-field {
-    @apply w-full h-[58px] bg-bgBase rounded-btn border-none shadow-inset-soft text-textPrimary text-base px-5 focus:outline-none focus:ring-2 focus:ring-primary/80;
+    @apply w-full h-[58px] bg-transparent rounded-btn border-none text-textPrimary text-base px-5
+           transition-all duration-200 ease-in-out
+           focus:outline-none focus:ring-2 focus:ring-primary/60;
+    background-color: hsl(var(--color-bgBase));
+    box-shadow: var(--shadow-in);
+  }
+  .input-field:focus {
+    box-shadow: var(--shadow-in), 0 0 0 2px hsla(var(--color-primary-hsl) / 0.5);
   }
 }
