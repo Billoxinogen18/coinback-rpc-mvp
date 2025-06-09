@@ -5,12 +5,17 @@ import { ListChecks, Gift, Loader2, BarChart3, ArrowRight } from 'lucide-react';
 import { ethers } from 'ethers';
 
 const Dashboard = ({ onDataChange }) => {
-  const { isAuthenticated, userProfile } = useAuth();
+  const { userProfile } = useAuth(); // Depend directly on userProfile
   const [transactions, setTransactions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
-    if (!isAuthenticated) return;
+    // Only fetch if we have a valid user profile.
+    if (!userProfile?.user_id) {
+        setIsLoading(false); // If there's no profile, stop loading.
+        return;
+    }
+
     setIsLoading(true);
     try {
       const txs = await getTransactions();
@@ -21,8 +26,9 @@ const Dashboard = ({ onDataChange }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [isAuthenticated]);
+  }, [userProfile]); // Dependency is now userProfile
 
+  // This hook now re-runs whenever userProfile changes OR when an external action happens.
   useEffect(() => {
     fetchData();
   }, [fetchData, onDataChange]);
@@ -31,11 +37,12 @@ const Dashboard = ({ onDataChange }) => {
     ? parseFloat(ethers.formatEther(userProfile.total_rewards_earned)).toFixed(6) 
     : '0.000000';
 
-  if (isLoading) {
+  // If there is no user profile yet, we are in a loading or logged-out state.
+  if (!userProfile) {
     return (
       <div className="card flex flex-col items-center justify-center p-6 min-h-[400px]">
         <Loader2 className="animate-spin h-10 w-10 text-primary" />
-        <span className="mt-4 text-lg text-textSecondary">Loading Dashboard Data...</span>
+        <span className="mt-4 text-lg text-textSecondary">Waiting for user data...</span>
       </div>
     );
   }
@@ -62,7 +69,11 @@ const Dashboard = ({ onDataChange }) => {
           <h2 className="text-xl font-bold">Transaction History</h2>
         </div>
         <div className="space-y-3">
-          {transactions.length > 0 ? (
+          {isLoading ? (
+            <div className="text-center py-10">
+                <Loader2 className="animate-spin h-8 w-8 text-primary mx-auto" />
+            </div>
+          ) : transactions.length > 0 ? (
             transactions.map(tx => (
               <a 
                 key={tx.transaction_pk} 
