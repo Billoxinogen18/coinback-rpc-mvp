@@ -4,24 +4,24 @@
 
 @layer base {
   :root {
-    --color-bg-base-hsl: 220 30% 8%;
-    --color-surface-hsl: 220 25% 12%;
-    --color-surface-elevated-hsl: 220 20% 16%;
-    --color-glass-border-hsl: 220 30% 25%;
+    --color-bg-base-hsl: 220 40% 97%;
+    --color-surface-hsl: 220 35% 100%;
+    --color-surface-elevated-hsl: 220 30% 99%;
+    --color-glass-border-hsl: 220 20% 85%;
     
-    --color-text-primary-hsl: 220 20% 95%;
-    --color-text-secondary-hsl: 220 15% 65%;
-    --color-text-muted-hsl: 220 10% 45%;
+    --color-text-primary-hsl: 220 25% 25%;
+    --color-text-secondary-hsl: 220 15% 50%;
+    --color-text-muted-hsl: 220 12% 65%;
     
-    --color-primary-hsl: 240 100% 70%;
-    --color-primary-glow-hsl: 240 100% 80%;
-    --color-accent-hsl: 280 100% 65%;
-    --color-accent-glow-hsl: 280 100% 75%;
+    --color-primary-hsl: 240 90% 65%;
+    --color-primary-glow-hsl: 240 90% 70%;
+    --color-accent-hsl: 280 90% 60%;
+    --color-accent-glow-hsl: 280 90% 65%;
 
-    --color-shadow-light-hsl: 220 20% 20%;
-    --color-shadow-dark-hsl: 220 50% 3%;
-    --color-shadow-inset-light-hsl: 220 15% 18%;
-    --color-shadow-inset-dark-hsl: 220 60% 6%;
+    --color-shadow-light-hsl: 220 30% 100%;
+    --color-shadow-dark-hsl: 220 20% 88%;
+    --color-shadow-inset-light-hsl: 220 30% 100%;
+    --color-shadow-inset-dark-hsl: 220 30% 94%;
 
     --shadow-distance: 8px;
     --shadow-blur: 20px;
@@ -29,24 +29,47 @@
 
     --shadow-out:
       var(--shadow-distance) var(--shadow-distance) calc(var(--shadow-blur) * 1.2) calc(var(--shadow-spread) * -1) hsl(var(--color-shadow-dark-hsl)),
-      calc(var(--shadow-distance) * -0.5) calc(var(--shadow-distance) * -0.5) calc(var(--shadow-blur) * 0.8) hsl(var(--color-shadow-light-hsl) / 0.6);
+      calc(var(--shadow-distance) * -0.5) calc(var(--shadow-distance) * -0.5) calc(var(--shadow-blur) * 0.8) hsl(var(--color-shadow-light-hsl));
 
     --shadow-out-lg: 
       calc(var(--shadow-distance) * 1.5) calc(var(--shadow-distance) * 1.5) calc(var(--shadow-blur) * 1.8) calc(var(--shadow-spread) * -1) hsl(var(--color-shadow-dark-hsl)),
-      calc(var(--shadow-distance) * -0.8) calc(var(--shadow-distance) * -0.8) calc(var(--shadow-blur) * 1.2) hsl(var(--color-shadow-light-hsl) / 0.7);
+      calc(var(--shadow-distance) * -0.8) calc(var(--shadow-distance) * -0.8) calc(var(--shadow-blur) * 1.2) hsl(var(--color-shadow-light-hsl));
 
     --shadow-in:
       inset calc(var(--shadow-distance) * 0.6) calc(var(--shadow-distance) * 0.6) calc(var(--shadow-blur) * 0.8) hsl(var(--color-shadow-inset-dark-hsl)),
-      inset calc(var(--shadow-distance) * -0.6) calc(var(--shadow-distance) * -0.6) calc(var(--shadow-blur) * 0.8) hsl(var(--color-shadow-inset-light-hsl) / 0.3);
+      inset calc(var(--shadow-distance) * -0.6) calc(var(--shadow-distance) * -0.6) calc(var(--shadow-blur) * 0.8) hsl(var(--color-shadow-inset-light-hsl));
 
     --shadow-glass:
-      0 8px 32px hsl(var(--color-shadow-dark-hsl) / 0.5),
-      0 2px 8px hsl(var(--color-shadow-dark-hsl) / 0.3),
-      inset 0 1px 0 hsl(var(--color-shadow-light-hsl) / 0.2);
+      0 8px 32px hsl(var(--color-shadow-dark-hsl) / 0.7),
+      0 2px 8px hsl(var(--color-shadow-dark-hsl) / 0.5),
+      inset 0 1px 0 hsl(var(--color-shadow-light-hsl) / 0.8);
 
     --shadow-pressed:
       inset 2px 2px 8px hsl(var(--color-shadow-dark-hsl)),
-      inset -1px -1px 4px hsl(var(--color-shadow-light-hsl) / 0.2);
+      inset -1px -1px 4px hsl(var(--color-shadow-light-hsl));
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --color-bg-base-hsl: 220 30% 8%;
+      --color-surface-hsl: 220 25% 12%;
+      --color-surface-elevated-hsl: 220 20% 16%;
+      --color-glass-border-hsl: 220 30% 25%;
+      
+      --color-text-primary-hsl: 220 20% 95%;
+      --color-text-secondary-hsl: 220 15% 65%;
+      --color-text-muted-hsl: 220 10% 45%;
+      
+      --color-primary-hsl: 240 100% 70%;
+      --color-primary-glow-hsl: 240 100% 80%;
+      --color-accent-hsl: 280 100% 65%;
+      --color-accent-glow-hsl: 280 100% 75%;
+  
+      --color-shadow-light-hsl: 220 20% 20%;
+      --color-shadow-dark-hsl: 220 50% 3%;
+      --color-shadow-inset-light-hsl: 220 15% 18%;
+      --color-shadow-inset-dark-hsl: 220 60% 6%;
+    }
   }
 
   * {
