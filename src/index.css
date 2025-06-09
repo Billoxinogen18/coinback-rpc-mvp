@@ -15,8 +15,9 @@
     
     --color-primary-hsl: 240 90% 65%;
     --color-primary-glow-hsl: 240 90% 70%;
-    --color-accent-hsl: 280 90% 60%;
-    --color-accent-glow-hsl: 280 90% 65%;
+    
+    --color-accent-hsl: 270 20% 80%;
+    --color-accent-glow-hsl: 270 25% 85%;
 
     --color-shadow-light-hsl: 220 30% 100%;
     --color-shadow-dark-hsl: 220 20% 88%;
@@ -62,8 +63,9 @@
       
       --color-primary-hsl: 240 100% 70%;
       --color-primary-glow-hsl: 240 100% 80%;
-      --color-accent-hsl: 280 100% 65%;
-      --color-accent-glow-hsl: 280 100% 75%;
+      
+      --color-accent-hsl: 270 30% 55%;
+      --color-accent-glow-hsl: 270 35% 60%;
   
       --color-shadow-light-hsl: 220 20% 20%;
       --color-shadow-dark-hsl: 220 50% 3%;
@@ -205,7 +207,6 @@
   }
 }
 
-/* Other styles from Claude's vision remain the same */
 @layer components {
   .card-elevated {
     @apply card;
