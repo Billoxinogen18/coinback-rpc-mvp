@@ -6,7 +6,7 @@ const RpcConfiguration = () => {
   const rpcUrl = import.meta.env.VITE_COINBACK_RPC_URL;
   const chainId = '11155111'; 
   const networkName = 'Coinback RPC (Sepolia)';
-  const currencySymbol = 'ETH';
+  const currencySymbol = 'SepoliaETH';
   const [copied, setCopied] = useState(false);
 
   const handleCopyRpcUrl = () => {
