@@ -28,25 +28,41 @@
   body {
     @apply bg-bgBase text-textPrimary antialiased;
     font-family: 'Inter', sans-serif;
+    overflow: hidden; /* Prevent scrollbars from the animated background */
   }
-  
-  /* Add a subtle noise texture to the background for depth */
+
+  /* Animated gradient background for a modern, dynamic feel */
   body::before {
-    content: "";
+    content: '';
     position: fixed;
     top: 0;
     left: 0;
-    width: 100vw;
-    height: 100vh;
-    background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300"><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.7" numOctaves="4" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(#noise)"/></svg>');
-    opacity: 0.03;
+    width: 100%;
+    height: 100%;
     z-index: -1;
+    --gradient-size: 800px;
+    background: radial-gradient(circle at 10% 20%, hsla(var(--color-primary-hsl), 0.15), transparent 40%),
+                radial-gradient(circle at 90% 80%, hsla(var(--color-accent-hsl), 0.15), transparent 40%);
+    animation: background-pan 20s alternate infinite;
+  }
+
+  @keyframes background-pan {
+    from { transform: translate(0%, 0%); }
+    to { transform: translate(-10%, -10%); }
   }
 }
 
 @layer components {
+  /*
+    CORRECTION:
+    The build failed because `@apply bg-glass` and `@apply border-glassBorder` were used
+    before Tailwind had a chance to generate those utility classes from the custom theme colors.
+    The fix is to apply the styles directly using the CSS variables.
+  */
   .glass-header {
-    @apply sticky top-0 z-50 bg-glass backdrop-blur-xl border-b border-glassBorder;
+    background-color: hsla(var(--color-surface-hsl) / 0.7);
+    border-bottom-color: hsla(var(--color-text-primary-hsl) / 0.1);
+    @apply sticky top-0 z-50 backdrop-blur-xl border-b;
   }
 
   .card {
@@ -54,7 +70,7 @@
   }
 
   .btn {
-    @apply flex items-center justify-center gap-2 px-5 py-2.5 rounded-btn font-semibold transition-all duration-200 focus:outline-none transform active:scale-[0.97];
+    @apply flex items-center justify-center gap-2 px-5 py-2.5 rounded-btn font-semibold transition-all duration-200 focus:outline-none transform active:scale-[0.97] focus:ring-2 focus:ring-primary/50;
   }
 
   .btn-primary {
@@ -62,10 +78,10 @@
   }
 
   .btn-secondary {
-    @apply btn bg-surface text-textPrimary shadow-sm hover:bg-white/10;
+    @apply btn bg-surface text-textPrimary shadow-sm hover:bg-white/10 dark:hover:bg-white/5;
   }
   
   .input-field {
-    @apply w-full p-4 bg-bgBase shadow-inset-soft rounded-btn text-textPrimary placeholder:text-textSecondary/70 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all duration-200;
+    @apply w-full h-[58px] p-4 bg-bgBase shadow-inset-soft rounded-btn text-textPrimary placeholder:text-textSecondary/70 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all duration-200;
   }
 }
