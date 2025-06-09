@@ -4,10 +4,17 @@ import { ethers } from 'ethers';
 import StakingABI from '../abi/Staking.json';
 import ERC20ABI from '../abi/ERC20.json';
 import toast from 'react-hot-toast';
-import { Database, Layers, Check, ChevronUp, ChevronDown, Loader2 } from 'lucide-react';
+import { Database, Check, ChevronUp, ChevronDown, Loader2 } from 'lucide-react';
+
+const StatCard = ({ label, value, isPrimary = false }) => (
+  <div className="bg-bgBase shadow-inset-soft p-4 rounded-btn text-center">
+    <p className="text-sm font-medium text-textSecondary">{label}</p>
+    <p className={`text-2xl font-bold ${isPrimary ? 'text-primary' : 'text-textPrimary'}`}>{value}</p>
+  </div>
+);
 
 const CbkPanel = ({ onAction }) => {
-  const { walletAddress, userProfile, refreshUserProfile } = useAuth();
+  const { walletAddress, userProfile } = useAuth();
   const [stakeAmount, setStakeAmount] = useState('');
   const [unstakeAmount, setUnstakeAmount] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -20,12 +27,10 @@ const CbkPanel = ({ onAction }) => {
     if (!walletAddress || !cbkTokenAddress || !stakingContractAddress || !window.ethereum) return;
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
-      const tokenContract = new ethers.Contract(cbkTokenAddress, ERC20ABI.abi, provider);
+      const tokenContract = new ethers.Contract(cbkTokenAddress, ERC20ABI, provider);
       const userAllowance = await tokenContract.allowance(walletAddress, stakingContractAddress);
       setAllowance(userAllowance);
-    } catch (e) {
-      console.error("Failed to get allowance:", e);
-    }
+    } catch (e) { console.error("Failed to get allowance:", e); }
   }, [walletAddress, cbkTokenAddress, stakingContractAddress]);
 
   useEffect(() => {
@@ -37,7 +42,8 @@ const CbkPanel = ({ onAction }) => {
   const needsApproval = useCallback(() => {
     if (!stakeAmount || isNaN(parseFloat(stakeAmount))) return false;
     try {
-      return ethers.parseUnits(stakeAmount, 18) > allowance;
+      const amountInUnits = ethers.parseUnits(stakeAmount, 18);
+      return amountInUnits > 0 && amountInUnits > allowance;
     } catch { return false; }
   }, [stakeAmount, allowance]);
   
@@ -45,10 +51,9 @@ const CbkPanel = ({ onAction }) => {
     setIsProcessing(true);
     const toastId = toast.loading('Approving token spend...');
     try {
-      if (!stakingContractAddress || !cbkTokenAddress || !window.ethereum) throw new Error("Wallet not configured");
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
-      const tokenContract = new ethers.Contract(cbkTokenAddress, ERC20ABI.abi, signer);
+      const tokenContract = new ethers.Contract(cbkTokenAddress, ERC20ABI, signer);
       const approveTx = await tokenContract.approve(stakingContractAddress, ethers.MaxUint256);
       await approveTx.wait();
       toast.success('Approval successful!', { id: toastId });
@@ -60,18 +65,17 @@ const CbkPanel = ({ onAction }) => {
     }
   };
 
-  const executeOnChainTx = async (txPromise, processingMessage, successMessage) => {
+  const executeTx = async (txPromise, { processing, success, error: errorMsg }, onFinally) => {
     setIsProcessing(true);
-    const toastId = toast.loading(processingMessage);
+    const toastId = toast.loading(processing);
     try {
       const tx = await txPromise;
       await tx.wait();
-      toast.success(successMessage, { id: toastId });
-      onAction();
-      setStakeAmount('');
-      setUnstakeAmount('');
+      toast.success(success, { id: toastId });
+      onAction(); // This refreshes parent data
+      if (onFinally) onFinally();
     } catch(err) {
-      toast.error(err?.reason || err.message || 'Transaction failed.', { id: toastId });
+      toast.error(err?.reason || err.message || errorMsg, { id: toastId });
     } finally {
       setIsProcessing(false);
     }
@@ -79,52 +83,72 @@ const CbkPanel = ({ onAction }) => {
 
   const handleStake = (e) => {
     e.preventDefault();
-    if (!stakeAmount) return;
+    if (!stakeAmount || isNaN(parseFloat(stakeAmount)) || parseFloat(stakeAmount) <= 0) return;
     const amount = ethers.parseUnits(stakeAmount, 18);
     const provider = new ethers.BrowserProvider(window.ethereum);
     provider.getSigner().then(signer => {
-      const stakingContract = new ethers.Contract(stakingContractAddress, StakingABI.abi, signer);
-      executeOnChainTx(stakingContract.stake(amount), 'Staking CBK...', 'Stake successful!');
+      const contract = new ethers.Contract(stakingContractAddress, StakingABI, signer);
+      executeTx(contract.stake(amount), {
+        processing: 'Staking CBK...',
+        success: 'Stake successful!',
+        error: 'Stake failed.'
+      }, () => setStakeAmount(''));
     });
   };
   
   const handleUnstake = (e) => {
     e.preventDefault();
-    if (!unstakeAmount) return;
+    if (!unstakeAmount || isNaN(parseFloat(unstakeAmount)) || parseFloat(unstakeAmount) <= 0) return;
     const amount = ethers.parseUnits(unstakeAmount, 18);
     const provider = new ethers.BrowserProvider(window.ethereum);
     provider.getSigner().then(signer => {
-      const stakingContract = new ethers.Contract(stakingContractAddress, StakingABI.abi, signer);
-      executeOnChainTx(stakingContract.unstake(amount), 'Unstaking CBK...', 'Unstake successful!');
+      const contract = new ethers.Contract(stakingContractAddress, StakingABI, signer);
+      executeTx(contract.unstake(amount), {
+        processing: 'Unstaking CBK...',
+        success: 'Unstake successful!',
+        error: 'Unstake failed.'
+      }, () => setUnstakeAmount(''));
     });
   };
   
   if (!userProfile) return null;
+  
   const cbkBalanceFormatted = parseFloat(ethers.formatUnits(userProfile.cbk_balance || '0', 18)).toLocaleString(undefined, {maximumFractionDigits: 2});
   const stakedCbkFormatted = parseFloat(ethers.formatUnits(userProfile.staked_cbk || '0', 18)).toLocaleString(undefined, {maximumFractionDigits: 2});
 
   return (
-    <div className="neumorphic-outset card-base space-y-6 transition-transform hover:scale-[1.02]">
-      <div className="flex items-center text-textPrimary">
+    <div className="card space-y-6">
+      <h2 className="text-2xl font-bold flex items-center">
         <Database size={24} className="mr-3 text-primary"/>
-        <h2 className="text-2xl font-bold">CBK Staking</h2>
+        CBK Staking
+      </h2>
+      
+      <div className="grid grid-cols-2 gap-4">
+        <StatCard label="Wallet Balance" value={cbkBalanceFormatted} />
+        <StatCard label="Amount Staked" value={stakedCbkFormatted} isPrimary />
       </div>
-      <div className="grid grid-cols-2 gap-4 text-center">
-        <div className="neumorphic-outset p-4 rounded-neo"><p className="text-sm font-medium text-textSecondary">Wallet Balance</p><p className="text-2xl font-bold">{cbkBalanceFormatted}</p></div>
-        <div className="neumorphic-outset p-4 rounded-neo"><p className="text-sm font-medium text-textSecondary">Amount Staked</p><p className="text-2xl font-bold text-primary">{stakedCbkFormatted}</p></div>
-      </div>
+
       <div className="space-y-6 pt-2">
         <form onSubmit={handleStake} className="space-y-3">
-          <input type="number" value={stakeAmount} onChange={e => setStakeAmount(e.target.value)} className="neumorphic-input" placeholder="Amount to stake"/>
+          <input type="number" value={stakeAmount} onChange={e => setStakeAmount(e.target.value)} className="input-field" placeholder="Amount to stake"/>
           {needsApproval() ? (
-            <button type="button" onClick={handleApprove} disabled={isProcessing} className="neumorphic-button w-full bg-accent text-white dark:text-bgBase shadow-glow-accent hover:shadow-none transition-shadow"><Check size={20} />Approve CBK</button>
+            <button type="button" onClick={handleApprove} disabled={isProcessing} className="btn w-full bg-accent text-white hover:bg-teal-500 drop-shadow-glow-accent">
+              {isProcessing ? <Loader2 className="animate-spin" /> : <Check size={20} />}
+              Approve CBK
+            </button>
           ) : (
-            <button type="submit" disabled={isProcessing || !stakeAmount} className="neumorphic-button w-full bg-primary text-white dark:text-bgBase glow-on-hover"><ChevronUp size={20}/>Stake</button>
+            <button type="submit" disabled={isProcessing || !stakeAmount} className="btn-primary w-full">
+              {isProcessing ? <Loader2 className="animate-spin" /> : <ChevronUp size={20} />}
+              Stake
+            </button>
           )}
         </form>
         <form onSubmit={handleUnstake} className="space-y-3">
-          <input type="number" value={unstakeAmount} onChange={e => setUnstakeAmount(e.target.value)} className="neumorphic-input" placeholder="Amount to unstake"/>
-          <button type="submit" disabled={isProcessing || !unstakeAmount} className="neumorphic-button w-full glow-on-hover"><ChevronDown size={20}/>Unstake</button>
+          <input type="number" value={unstakeAmount} onChange={e => setUnstakeAmount(e.target.value)} className="input-field" placeholder="Amount to unstake"/>
+          <button type="submit" disabled={isProcessing || !unstakeAmount} className="btn-secondary w-full">
+            {isProcessing ? <Loader2 className="animate-spin" /> : <ChevronDown size={20} />}
+            Unstake
+          </button>
         </form>
       </div>
     </div>

@@ -4,82 +4,68 @@
 
 @layer base {
   :root {
-    --color-bg-base-hsl: 224 25% 96%;
-    --color-surface-hsl: 224 25% 96%;
-    --color-text-primary-hsl: 220 15% 25%;
-    --color-text-secondary-hsl: 220 10% 50%;
-    --color-primary-hsl: 240 90% 65%;
-    --color-accent-hsl: 330 95% 60%;
-    --color-shadow-light-hsl: 0 0% 100%;
-    --color-shadow-dark-hsl: 224 20% 88%;
-    --shadow-light-opacity: 0.9;
-    --shadow-dark-opacity: 1;
+    --color-bg-base-hsl: 220 30% 98%;
+    --color-surface-hsl: 220 30% 100%;
+    --color-text-primary-hsl: 224 25% 15%;
+    --color-text-secondary-hsl: 220 15% 55%;
+    --color-primary-hsl: 220 85% 60%;
+    --color-accent-hsl: 180 80% 45%;
+    --color-shadow-hsl: 224 30% 10%;
   }
  
   @media (prefers-color-scheme: dark) {
     :root {
       --color-bg-base-hsl: 226 20% 10%;
-      --color-surface-hsl: 226 20% 12%;
+      --color-surface-hsl: 226 20% 13%;
       --color-text-primary-hsl: 220 20% 95%;
       --color-text-secondary-hsl: 220 10% 65%;
-      --color-primary-hsl: 240 90% 70%;
-      --color-accent-hsl: 330 95% 65%;
-      --color-shadow-light-hsl: 226 20% 15%;
-      --color-shadow-dark-hsl: 225 20% 6%;
-      --shadow-light-opacity: 1;
-      --shadow-dark-opacity: 1;
+      --color-primary-hsl: 220 85% 65%;
+      --color-accent-hsl: 180 80% 50%;
+      --color-shadow-hsl: 226 25% 5%;
     }
   }
 
   body {
-    @apply bg-bgBase text-textPrimary;
+    @apply bg-bgBase text-textPrimary antialiased;
     font-family: 'Inter', sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
   }
-
+  
+  /* Add a subtle noise texture to the background for depth */
   body::before {
-    content: '';
+    content: "";
     position: fixed;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle at center, hsla(var(--color-primary-hsl)/0.1), transparent 40%),
-                radial-gradient(circle at 80% 20%, hsla(var(--color-accent-hsl)/0.1), transparent 30%),
-                radial-gradient(circle at 20% 80%, hsla(var(--color-primary-hsl)/0.05), transparent 35%);
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300"><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.7" numOctaves="4" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(#noise)"/></svg>');
+    opacity: 0.03;
     z-index: -1;
-    animation: background-pan 30s linear infinite;
-  }
-
-  @keyframes background-pan {
-    0% { transform: rotate(0deg) scale(1); }
-    100% { transform: rotate(360deg) scale(1); }
   }
 }
 
 @layer components {
-  .glassmorphic {
-    @apply bg-glassOverlay backdrop-blur-lg border border-glassBorder shadow-glass rounded-t-none;
+  .glass-header {
+    @apply sticky top-0 z-50 bg-glass backdrop-blur-xl border-b border-glassBorder;
   }
 
-  .card-base {
-    @apply p-6 lg:p-8 animate-fade-in-up transition-all duration-300;
+  .card {
+    @apply bg-surface rounded-card shadow-card p-6 sm:p-8 animate-fade-in-up;
+  }
+
+  .btn {
+    @apply flex items-center justify-center gap-2 px-5 py-2.5 rounded-btn font-semibold transition-all duration-200 focus:outline-none transform active:scale-[0.97];
+  }
+
+  .btn-primary {
+    @apply btn bg-primary text-white shadow-button hover:bg-blue-500 hover:shadow-button-hover;
+  }
+
+  .btn-secondary {
+    @apply btn bg-surface text-textPrimary shadow-sm hover:bg-white/10;
   }
   
-  .neumorphic-outset {
-    @apply bg-surface shadow-neo-outset rounded-neo-lg;
-  }
-
-  .neumorphic-button {
-    @apply px-6 py-3 font-semibold shadow-neo-button active:shadow-neo-button-active rounded-neo transition-all duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none flex items-center justify-center gap-2.5 transform active:scale-[0.98];
-  }
-
-  .neumorphic-input {
-    @apply w-full p-4 bg-bgBase shadow-neo-inset rounded-neo text-textPrimary placeholder:text-textSecondary/60 focus:shadow-neo-outset focus:outline-none transition-shadow duration-200 ease-in-out;
-  }
-
-  .glow-on-hover:hover {
-    @apply shadow-glow-primary;
+  .input-field {
+    @apply w-full p-4 bg-bgBase shadow-inset-soft rounded-btn text-textPrimary placeholder:text-textSecondary/70 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all duration-200;
   }
 }
