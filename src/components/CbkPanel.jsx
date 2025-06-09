@@ -7,7 +7,7 @@ import toast from 'react-hot-toast';
 import { Database, Check, ChevronUp, ChevronDown, Loader2 } from 'lucide-react';
 
 const StatCard = ({ label, value, isPrimary = false }) => (
-  <div className="bg-bgBase shadow-inset-soft p-4 rounded-btn text-center">
+  <div className="bg-bgBase p-4 rounded-xl text-center" style={{ boxShadow: 'var(--shadow-in)' }}>
     <p className="text-sm font-medium text-textSecondary">{label}</p>
     <p className={`text-2xl font-bold ${isPrimary ? 'text-primary' : 'text-textPrimary'}`}>{value}</p>
   </div>
@@ -18,6 +18,7 @@ const CbkPanel = ({ onAction }) => {
   const [stakeAmount, setStakeAmount] = useState('');
   const [unstakeAmount, setUnstakeAmount] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isApproving, setIsApproving] = useState(false);
   const [allowance, setAllowance] = useState(ethers.toBigInt(0));
   
   const stakingContractAddress = import.meta.env.VITE_STAKING_CONTRACT_ADDRESS;
@@ -37,7 +38,7 @@ const CbkPanel = ({ onAction }) => {
     if (userProfile && walletAddress) {
       getAllowance();
     }
-  }, [userProfile, walletAddress, getAllowance]);
+  }, [userProfile, walletAddress, getAllowance, onAction]);
   
   const needsApproval = useCallback(() => {
     if (!stakeAmount || isNaN(parseFloat(stakeAmount))) return false;
@@ -48,7 +49,7 @@ const CbkPanel = ({ onAction }) => {
   }, [stakeAmount, allowance]);
   
   const handleApprove = async () => {
-    setIsProcessing(true);
+    setIsApproving(true);
     const toastId = toast.loading('Approving token spend...');
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
@@ -61,7 +62,7 @@ const CbkPanel = ({ onAction }) => {
     } catch (err) {
       toast.error(err?.reason || err.message || 'Approval failed.', { id: toastId });
     } finally {
-      setIsProcessing(false);
+      setIsApproving(false);
     }
   };
 
@@ -72,7 +73,7 @@ const CbkPanel = ({ onAction }) => {
       const tx = await txPromise;
       await tx.wait();
       toast.success(success, { id: toastId });
-      onAction(); // This refreshes parent data
+      onAction(); 
       if (onFinally) onFinally();
     } catch(err) {
       toast.error(err?.reason || err.message || errorMsg, { id: toastId });
@@ -132,12 +133,12 @@ const CbkPanel = ({ onAction }) => {
         <form onSubmit={handleStake} className="space-y-3">
           <input type="number" value={stakeAmount} onChange={e => setStakeAmount(e.target.value)} className="input-field" placeholder="Amount to stake"/>
           {needsApproval() ? (
-            <button type="button" onClick={handleApprove} disabled={isProcessing} className="btn w-full bg-accent text-white hover:bg-teal-500 drop-shadow-glow-accent">
-              {isProcessing ? <Loader2 className="animate-spin" /> : <Check size={20} />}
+            <button type="button" onClick={handleApprove} disabled={isApproving || isProcessing} className="btn w-full bg-accent/80 text-white hover:bg-accent">
+              {isApproving ? <Loader2 className="animate-spin" /> : <Check size={20} />}
               Approve CBK
             </button>
           ) : (
-            <button type="submit" disabled={isProcessing || !stakeAmount} className="btn-primary w-full">
+            <button type="submit" disabled={isProcessing || isApproving || !stakeAmount} className="btn-primary w-full">
               {isProcessing ? <Loader2 className="animate-spin" /> : <ChevronUp size={20} />}
               Stake
             </button>
@@ -145,7 +146,7 @@ const CbkPanel = ({ onAction }) => {
         </form>
         <form onSubmit={handleUnstake} className="space-y-3">
           <input type="number" value={unstakeAmount} onChange={e => setUnstakeAmount(e.target.value)} className="input-field" placeholder="Amount to unstake"/>
-          <button type="submit" disabled={isProcessing || !unstakeAmount} className="btn-secondary w-full">
+          <button type="submit" disabled={isProcessing || isApproving || !unstakeAmount} className="btn-secondary w-full">
             {isProcessing ? <Loader2 className="animate-spin" /> : <ChevronDown size={20} />}
             Unstake
           </button>

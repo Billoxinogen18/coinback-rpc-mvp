@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { getTransactions } from '../services/api';
-import { ListChecks, Gift, Loader2, BarChart3, ArrowRight } from 'lucide-react';
+import { ListChecks, Gift, Loader2, BarChart3, ArrowRight, CornerUpRight } from 'lucide-react';
 import { ethers } from 'ethers';
 
 const Dashboard = ({ onDataChange }) => {
@@ -41,26 +41,24 @@ const Dashboard = ({ onDataChange }) => {
   }
   
   return (
-    <div className="space-y-6 lg:space-y-8">
-      {/* Rewards Overview Hero */}
-      <div className="card text-center bg-primary/5 dark:bg-primary/10 transition-transform hover:scale-[1.01] hover:shadow-lg">
-        <div className="flex items-center justify-center text-primary mb-4">
+    <div className="space-y-8">
+      <div className="card text-center transition-transform hover:scale-[1.02] hover:shadow-lg">
+        <div className="flex items-center justify-center text-primary mb-3">
           <Gift className="mr-3 drop-shadow-glow-primary" />
           <h2 className="text-lg font-semibold uppercase tracking-wider">Total Rewards Earned</h2>
         </div>
-        <p className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent">
+        <p className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary via-accent to-primary/80 text-glow-primary">
           {totalRewards}
-          <span className="text-3xl ml-2">ETH</span>
+          <span className="text-3xl ml-2 font-light">ETH</span>
         </p>
       </div>
 
-      {/* Transaction History */}
       <div className="card">
         <h2 className="text-2xl font-bold flex items-center mb-6">
           <ListChecks className="mr-3 text-primary" />
           Transaction History
         </h2>
-        <div className="space-y-3">
+        <div className="space-y-4">
           {transactions.length > 0 ? (
             transactions.map(tx => (
               <a 
@@ -68,16 +66,16 @@ const Dashboard = ({ onDataChange }) => {
                 href={`https://sepolia.etherscan.io/tx/${tx.client_tx_hash}`} 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="flex items-center justify-between p-4 rounded-btn bg-bgBase hover:bg-surface transition-colors duration-200 shadow-inset-soft group"
+                className="flex items-center justify-between p-4 rounded-xl bg-bgBase hover:bg-surface/60 transition-colors duration-200 group"
               >
                 <div>
                   <p className="font-mono text-sm text-primary group-hover:underline">
-                    {`${tx.client_tx_hash.substring(0, 12)}...${tx.client_tx_hash.substring(tx.client_tx_hash.length - 10)}`}
+                    {`${tx.client_tx_hash.substring(0, 10)}...${tx.client_tx_hash.substring(tx.client_tx_hash.length - 8)}`}
                   </p>
                   <p className="text-xs text-textSecondary capitalize">{tx.final_status?.replace(/_/g, ' ') || 'Unknown'}</p>
                 </div>
                 <div className="text-right flex items-center gap-4">
-                  <span className="font-semibold text-green-500">
+                  <span className="font-semibold text-green-400">
                       {tx.profit_share_contributed && BigInt(tx.profit_share_contributed) > 0 
                         ? `+${ethers.formatEther(tx.profit_share_contributed)} ETH` 
                         : <span className="text-textSecondary/50">N/A</span>}
@@ -87,9 +85,9 @@ const Dashboard = ({ onDataChange }) => {
               </a>
             ))
           ) : (
-            <div className="text-center p-10 text-textSecondary">
+            <div className="text-center p-10 text-textSecondary border-2 border-dashed border-white/10 rounded-2xl">
               <BarChart3 className="mx-auto h-12 w-12 mb-4 opacity-30"/>
-              <p className="font-semibold text-lg">No Transactions Yet</p>
+              <p className="font-semibold text-lg text-textPrimary">No Transactions Yet</p>
               <p className="mt-1">Send transactions through the Coinback RPC to see them here.</p>
             </div>
           )}

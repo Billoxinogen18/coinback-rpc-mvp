@@ -47,8 +47,8 @@ const RpcConfiguration = () => {
         <div>
           <label className="block text-sm font-semibold text-textSecondary mb-2 pl-1">Network RPC URL</label>
           <div className="flex items-center">
-            <input type="text" readOnly value={rpcUrl} className="input-field rounded-r-none"/>
-            <button onClick={handleCopyRpcUrl} className="btn-secondary h-[58px] aspect-square p-0 flex-shrink-0 rounded-l-none">
+            <input type="text" readOnly value={rpcUrl} className="input-field rounded-r-none focus:ring-0"/>
+            <button onClick={handleCopyRpcUrl} className="btn-secondary h-[52px] aspect-square p-0 flex-shrink-0 rounded-l-none border-l border-black/20">
               {copied ? <CheckCircle size={20} className="text-green-500" /> : <Copy size={20} />}
             </button>
           </div>

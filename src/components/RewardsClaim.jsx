@@ -74,12 +74,12 @@ const RewardsClaim = ({ onRewardsClaimed }) => {
           <div className="space-y-4">
             <p className="text-sm text-textSecondary pb-2">You have rewards from previous epochs ready to be claimed.</p>
             {rewardsData.claims.map((claim) => (
-                <div key={claim.rewardId} className="flex justify-between items-center p-4 rounded-btn bg-bgBase shadow-inset-soft">
+                <div key={claim.rewardId} className="flex justify-between items-center p-4 rounded-xl bg-bgBase hover:bg-surface/60 transition-colors">
                     <div>
-                        <p className="font-bold text-lg text-primary">{claim.amountFormatted} ETH</p>
+                        <p className="font-bold text-lg text-primary text-glow-primary">{claim.amountFormatted} ETH</p>
                         <p className="text-xs text-textSecondary">For Epoch ID: {claim.epochId}</p>
                     </div>
-                    <button onClick={() => handleClaim(claim)} disabled={isClaiming !== null} className="btn-primary bg-accent hover:bg-teal-500 text-white min-w-[120px]">
+                    <button onClick={() => handleClaim(claim)} disabled={isClaiming !== null} className="btn-primary min-w-[120px]">
                       {isClaiming === claim.rewardId ? <Loader2 size={18} className="animate-spin" /> : <CheckCircle size={18}/>}
                       <span>{isClaiming === claim.rewardId ? 'Claiming...' : 'Claim'}</span>
                     </button>
@@ -87,9 +87,9 @@ const RewardsClaim = ({ onRewardsClaimed }) => {
             ))}
           </div>
         ) : (
-          <div className="text-center p-10 text-textSecondary">
+          <div className="text-center p-10 text-textSecondary border-2 border-dashed border-white/10 rounded-2xl">
             <XCircle className="mx-auto h-12 w-12 mb-4 opacity-30"/>
-            <p className="font-semibold text-lg">No Rewards Available</p>
+            <p className="font-semibold text-lg text-textPrimary">No Rewards Available</p>
             <p className="mt-1">There are no rewards available to claim at this time.</p>
           </div>
         )}
