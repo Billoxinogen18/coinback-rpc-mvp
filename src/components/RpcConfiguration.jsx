@@ -4,9 +4,9 @@ import { Settings, Copy, CheckCircle } from 'lucide-react';
 
 const RpcConfiguration = () => {
   const rpcUrl = import.meta.env.VITE_COINBACK_RPC_URL;
-  const chainId = '11155111';
+  const chainId = import.meta.env.VITE_CHAIN_ID || '11155111';
   const networkName = 'Coinback RPC (Sepolia)';
-  const currencySymbol = 'ETH';
+  const currencySymbol = 'ETH'; // This is the required symbol for Sepolia.
   const [copied, setCopied] = useState(false);
 
   const handleCopyRpcUrl = () => {
@@ -29,11 +29,18 @@ const RpcConfiguration = () => {
           chainName: networkName,
           nativeCurrency: { name: currencySymbol, symbol: currencySymbol, decimals: 18 },
           rpcUrls: [rpcUrl],
+          // Optional: Add block explorer URL for user convenience
+          blockExplorerUrls: ['https://sepolia.etherscan.io']
         }],
       });
       toast.success(`Successfully added "${networkName}" to wallet!`);
     } catch (error) {
-      toast.error(`Failed to add network: ${error.message}`);
+        if (error.code === 4001) {
+             toast.error('Request to add network was rejected by user.');
+        } else {
+            toast.error(`Failed to add network: ${error.message}`);
+        }
+      console.error(error);
     }
   };
 
