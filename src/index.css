@@ -4,39 +4,60 @@
 
 @layer base {
   :root {
-    --color-bg-base-hsl: 230 25% 9%;
-    --color-surface-hsl: 232 22% 13%;
-    --color-glass-border-hsl: 230 20% 25%;
+    --color-bg-base-hsl: 220 30% 8%;
+    --color-surface-hsl: 220 25% 12%;
+    --color-surface-elevated-hsl: 220 20% 16%;
+    --color-glass-border-hsl: 220 30% 25%;
     
-    --color-text-primary-hsl: 225 30% 95%;
-    --color-text-secondary-hsl: 225 15% 70%;
+    --color-text-primary-hsl: 220 20% 95%;
+    --color-text-secondary-hsl: 220 15% 65%;
+    --color-text-muted-hsl: 220 10% 45%;
     
-    --color-primary-hsl: 250 85% 70%;
-    --color-accent-hsl: 325 85% 65%;
+    --color-primary-hsl: 240 100% 70%;
+    --color-primary-glow-hsl: 240 100% 80%;
+    --color-accent-hsl: 280 100% 65%;
+    --color-accent-glow-hsl: 280 100% 75%;
 
-    --color-shadow-light-hsl: 232 20% 18%;
-    --color-shadow-dark-hsl: 230 40% 5%;
+    --color-shadow-light-hsl: 220 20% 20%;
+    --color-shadow-dark-hsl: 220 50% 3%;
+    --color-shadow-inset-light-hsl: 220 15% 18%;
+    --color-shadow-inset-dark-hsl: 220 60% 6%;
 
-    --shadow-distance: 5px;
-    --shadow-blur: 15px;
+    --shadow-distance: 8px;
+    --shadow-blur: 20px;
+    --shadow-spread: 2px;
 
     --shadow-out:
-      var(--shadow-distance) var(--shadow-distance) var(--shadow-blur) hsl(var(--color-shadow-dark-hsl)),
-      calc(var(--shadow-distance) * -1) calc(var(--shadow-distance) * -1) var(--shadow-blur) hsl(var(--color-shadow-light-hsl));
+      var(--shadow-distance) var(--shadow-distance) calc(var(--shadow-blur) * 1.2) calc(var(--shadow-spread) * -1) hsl(var(--color-shadow-dark-hsl)),
+      calc(var(--shadow-distance) * -0.5) calc(var(--shadow-distance) * -0.5) calc(var(--shadow-blur) * 0.8) hsl(var(--color-shadow-light-hsl) / 0.6);
 
     --shadow-out-lg: 
-      calc(var(--shadow-distance) * 1.8) calc(var(--shadow-distance) * 1.8) calc(var(--shadow-blur) * 1.8) hsl(var(--color-shadow-dark-hsl)),
-      calc(var(--shadow-distance) * -1.8) calc(var(--shadow-distance) * -1.8) calc(var(--shadow-blur) * 1.8) hsl(var(--color-shadow-light-hsl));
+      calc(var(--shadow-distance) * 1.5) calc(var(--shadow-distance) * 1.5) calc(var(--shadow-blur) * 1.8) calc(var(--shadow-spread) * -1) hsl(var(--color-shadow-dark-hsl)),
+      calc(var(--shadow-distance) * -0.8) calc(var(--shadow-distance) * -0.8) calc(var(--shadow-blur) * 1.2) hsl(var(--color-shadow-light-hsl) / 0.7);
 
     --shadow-in:
-      inset calc(var(--shadow-distance) * 0.8) calc(var(--shadow-distance) * 0.8) var(--shadow-blur) hsl(var(--color-shadow-dark-hsl)),
-      inset calc(var(--shadow-distance) * -0.8) calc(var(--shadow-distance) * -0.8) var(--shadow-blur) hsl(var(--color-shadow-light-hsl));
+      inset calc(var(--shadow-distance) * 0.6) calc(var(--shadow-distance) * 0.6) calc(var(--shadow-blur) * 0.8) hsl(var(--color-shadow-inset-dark-hsl)),
+      inset calc(var(--shadow-distance) * -0.6) calc(var(--shadow-distance) * -0.6) calc(var(--shadow-blur) * 0.8) hsl(var(--color-shadow-inset-light-hsl) / 0.3);
+
+    --shadow-glass:
+      0 8px 32px hsl(var(--color-shadow-dark-hsl) / 0.5),
+      0 2px 8px hsl(var(--color-shadow-dark-hsl) / 0.3),
+      inset 0 1px 0 hsl(var(--color-shadow-light-hsl) / 0.2);
+
+    --shadow-pressed:
+      inset 2px 2px 8px hsl(var(--color-shadow-dark-hsl)),
+      inset -1px -1px 4px hsl(var(--color-shadow-light-hsl) / 0.2);
+  }
+
+  * {
+    box-sizing: border-box;
   }
 
   body {
     @apply bg-bgBase text-textPrimary antialiased selection:bg-primary/30;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     overflow-x: hidden;
+    background-attachment: fixed;
   }
 
   body::before {
@@ -44,95 +65,301 @@
     position: fixed;
     top: 0; left: 0;
     width: 100vw; height: 100vh;
-    z-index: -1;
+    z-index: -2;
     background:
-      radial-gradient(ellipse at 80% 20%, hsl(var(--color-primary-hsl) / 0.25) 0%, transparent 60%),
-      radial-gradient(ellipse at 20% 80%, hsl(var(--color-accent-hsl) / 0.2) 0%, transparent 60%);
-    animation: background-pan 30s ease-in-out infinite alternate;
-    filter: blur(120px);
+      radial-gradient(ellipse 800px 400px at 20% 30%, hsl(var(--color-primary-hsl) / 0.15) 0%, transparent 50%),
+      radial-gradient(ellipse 600px 300px at 80% 70%, hsl(var(--color-accent-hsl) / 0.12) 0%, transparent 50%),
+      radial-gradient(ellipse 400px 200px at 60% 10%, hsl(var(--color-primary-hsl) / 0.08) 0%, transparent 60%);
+    animation: background-float 40s ease-in-out infinite alternate;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: -1;
+    background: 
+      linear-gradient(135deg, transparent 0%, hsl(var(--color-bg-base-hsl) / 0.1) 50%, transparent 100%);
+    backdrop-filter: blur(100px);
   }
 }
 
 @layer components {
   .card {
-    @apply rounded-3xl p-6 sm:p-8 transition-all duration-300;
-    background-color: hsl(var(--color-surface-hsl) / 0.5);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    border: 1px solid hsl(var(--color-glass-border-hsl) / 0.5);
+    @apply rounded-3xl p-6 sm:p-8 transition-all duration-300 relative overflow-hidden;
+    background: 
+      linear-gradient(145deg, hsl(var(--color-surface-hsl) / 0.8), hsl(var(--color-surface-hsl) / 0.6));
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid hsl(var(--color-glass-border-hsl) / 0.3);
     box-shadow: var(--shadow-out);
+    position: relative;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    right: 0; bottom: 0;
+    background: linear-gradient(145deg, 
+      hsl(var(--color-shadow-light-hsl) / 0.1) 0%, 
+      transparent 50%, 
+      hsl(var(--color-shadow-dark-hsl) / 0.1) 100%);
+    pointer-events: none;
+    border-radius: inherit;
+  }
+
+  .card-elevated {
+    @apply card;
+    background: 
+      linear-gradient(145deg, hsl(var(--color-surface-elevated-hsl) / 0.9), hsl(var(--color-surface-elevated-hsl) / 0.7));
+    box-shadow: var(--shadow-out-lg);
+    transform: translateY(-2px);
   }
 
   .btn {
-    @apply flex items-center justify-center gap-3 px-5 py-3 rounded-xl font-semibold 
-           transition-all duration-200 ease-out
+    @apply flex items-center justify-center gap-3 px-6 py-3.5 rounded-2xl font-semibold text-sm
+           transition-all duration-200 ease-out relative overflow-hidden
            focus:outline-none focus:ring-4 focus:ring-offset-0 focus:ring-offset-transparent
-           disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none disabled:bg-opacity-50;
-    background-color: hsl(var(--color-surface-hsl));
+           disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none disabled:transform-none;
+    background: linear-gradient(145deg, hsl(var(--color-surface-hsl)), hsl(var(--color-surface-hsl) / 0.8));
     color: hsl(var(--color-text-secondary-hsl));
     box-shadow: var(--shadow-out);
+    border: 1px solid hsl(var(--color-glass-border-hsl) / 0.2);
+  }
+
+  .btn::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    right: 0; bottom: 0;
+    background: linear-gradient(145deg, 
+      hsl(var(--color-shadow-light-hsl) / 0.1) 0%, 
+      transparent 50%, 
+      hsl(var(--color-shadow-dark-hsl) / 0.05) 100%);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    border-radius: inherit;
   }
   
   .btn:not(:disabled):hover {
-    @apply -translate-y-0.5;
+    @apply -translate-y-1;
     box-shadow: var(--shadow-out-lg);
-    filter: brightness(1.1);
     color: hsl(var(--color-text-primary-hsl));
+    transform: translateY(-4px);
+  }
+
+  .btn:not(:disabled):hover::before {
+    opacity: 1;
   }
   
   .btn:not(:disabled):active {
-    @apply translate-y-px;
-    box-shadow: var(--shadow-in);
-    filter: brightness(0.95);
+    @apply translate-y-0;
+    box-shadow: var(--shadow-pressed);
+    transform: translateY(1px);
   }
   
   .btn-primary {
-    @apply btn bg-primary text-white focus:ring-primary/40;
+    @apply btn text-white focus:ring-primary/30;
+    background: linear-gradient(145deg, hsl(var(--color-primary-hsl)), hsl(var(--color-primary-hsl) / 0.8));
+    box-shadow: 
+      var(--shadow-out),
+      0 0 20px hsl(var(--color-primary-hsl) / 0.3);
+    border: 1px solid hsl(var(--color-primary-hsl) / 0.5);
   }
+
+  .btn-primary::before {
+    background: linear-gradient(145deg, 
+      hsl(var(--color-primary-glow-hsl) / 0.2) 0%, 
+      transparent 50%, 
+      hsl(var(--color-primary-hsl) / 0.1) 100%);
+  }
+
   .btn-primary:not(:disabled):hover {
-    @apply bg-primary;
+    box-shadow: 
+      var(--shadow-out-lg),
+      0 0 30px hsl(var(--color-primary-hsl) / 0.5),
+      0 0 60px hsl(var(--color-primary-hsl) / 0.2);
   }
 
   .btn-secondary {
-    @apply btn focus:ring-primary/30;
+    @apply btn focus:ring-primary/20;
+    background: linear-gradient(145deg, 
+      hsl(var(--color-surface-elevated-hsl) / 0.8), 
+      hsl(var(--color-surface-hsl) / 0.9));
+  }
+
+  .btn-accent {
+    @apply btn text-white focus:ring-accent/30;
+    background: linear-gradient(145deg, hsl(var(--color-accent-hsl)), hsl(var(--color-accent-hsl) / 0.8));
+    box-shadow: 
+      var(--shadow-out),
+      0 0 20px hsl(var(--color-accent-hsl) / 0.3);
+    border: 1px solid hsl(var(--color-accent-hsl) / 0.5);
   }
    
   .input-field {
-    @apply w-full h-[52px] bg-bgBase rounded-xl border-none text-textPrimary text-base px-5
-           transition-all duration-200 ease-out placeholder:text-textSecondary/40
-           focus:outline-none focus:ring-2 focus:ring-primary/50;
+    @apply w-full h-14 rounded-2xl border-none text-textPrimary text-base px-6
+           transition-all duration-200 ease-out placeholder:text-textSecondary/50
+           focus:outline-none focus:ring-2 focus:ring-primary/50 relative;
+    background: linear-gradient(145deg, 
+      hsl(var(--color-surface-hsl) / 0.6), 
+      hsl(var(--color-surface-hsl) / 0.8));
     box-shadow: var(--shadow-in);
+    border: 1px solid hsl(var(--color-glass-border-hsl) / 0.2);
+    backdrop-filter: blur(10px);
+  }
+
+  .input-field:focus {
+    box-shadow: 
+      var(--shadow-in),
+      0 0 0 2px hsl(var(--color-primary-hsl) / 0.3);
+  }
+
+  .glass-panel {
+    @apply rounded-3xl transition-all duration-300 relative overflow-hidden;
+    background: hsl(var(--color-surface-hsl) / 0.4);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid hsl(var(--color-glass-border-hsl) / 0.3);
+    box-shadow: var(--shadow-glass);
+  }
+
+  .glass-panel::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, 
+      transparent 0%, 
+      hsl(var(--color-shadow-light-hsl) / 0.5) 50%, 
+      transparent 100%);
+  }
+
+  .stat-card {
+    @apply p-5 rounded-2xl text-center transition-all duration-300 relative overflow-hidden;
+    background: linear-gradient(145deg, 
+      hsl(var(--color-surface-hsl) / 0.7), 
+      hsl(var(--color-surface-hsl) / 0.5));
+    box-shadow: var(--shadow-in);
+    border: 1px solid hsl(var(--color-glass-border-hsl) / 0.2);
+    backdrop-filter: blur(10px);
+  }
+
+  .stat-card-primary {
+    @apply stat-card;
+    background: linear-gradient(145deg, 
+      hsl(var(--color-primary-hsl) / 0.15), 
+      hsl(var(--color-primary-hsl) / 0.08));
+    border: 1px solid hsl(var(--color-primary-hsl) / 0.2);
+    box-shadow: 
+      var(--shadow-in),
+      inset 0 0 20px hsl(var(--color-primary-hsl) / 0.1);
   }
 }
 
 @layer utilities {
   .drop-shadow-glow-primary {
-    filter: drop-shadow(0 0 12px hsl(var(--color-primary-hsl) / 0.8));
+    filter: drop-shadow(0 0 16px hsl(var(--color-primary-hsl) / 0.8)) 
+            drop-shadow(0 0 32px hsl(var(--color-primary-hsl) / 0.4));
   }
+
   .drop-shadow-glow-accent {
-     filter: drop-shadow(0 0 12px hsl(var(--color-accent-hsl) / 0.7));
+    filter: drop-shadow(0 0 16px hsl(var(--color-accent-hsl) / 0.7)) 
+            drop-shadow(0 0 32px hsl(var(--color-accent-hsl) / 0.3));
   }
 
   .text-glow-primary {
-    text-shadow: 0 0 10px hsl(var(--color-primary-hsl) / 0.9);
+    text-shadow: 
+      0 0 10px hsl(var(--color-primary-hsl) / 0.8),
+      0 0 20px hsl(var(--color-primary-hsl) / 0.4),
+      0 0 40px hsl(var(--color-primary-hsl) / 0.2);
+  }
+
+  .text-glow-accent {
+    text-shadow: 
+      0 0 10px hsl(var(--color-accent-hsl) / 0.8),
+      0 0 20px hsl(var(--color-accent-hsl) / 0.4);
   }
   
   .bg-glass {
-    background-color: hsl(var(--color-surface-hsl) / 0.4);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    background: hsl(var(--color-surface-hsl) / 0.3);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
   }
 
-  .border-glassBorder {
-     border-color: hsl(var(--color-glass-border-hsl) / 0.4);
+  .bg-glass-strong {
+    background: hsl(var(--color-surface-hsl) / 0.6);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+  }
+
+  .border-glass {
+    border-color: hsl(var(--color-glass-border-hsl) / 0.3);
+  }
+
+  .animate-fade-in-up {
+    animation: fade-in-up 0.6s ease-out forwards;
+  }
+
+  .animate-glow-pulse {
+    animation: glow-pulse 2s ease-in-out infinite alternate;
   }
 }
 
-@keyframes background-pan {
+@keyframes background-float {
+  0%, 100% {
+    transform: translate(0%, 0%) rotate(0deg) scale(1);
+  }
+  33% {
+    transform: translate(5%, -5%) rotate(1deg) scale(1.02);
+  }
+  66% {
+    transform: translate(-3%, 3%) rotate(-1deg) scale(0.98);
+  }
+}
+
+@keyframes fade-in-up {
   from {
-    transform: translate(5%, -5%) scale(1.2);
+    opacity: 0;
+    transform: translateY(30px);
   }
   to {
-    transform: translate(-5%, 5%) scale(1.2);
+    opacity: 1;
+    transform: translateY(0);
   }
+}
+
+@keyframes glow-pulse {
+  from {
+    filter: drop-shadow(0 0 5px hsl(var(--color-primary-hsl) / 0.5));
+  }
+  to {
+    filter: drop-shadow(0 0 20px hsl(var(--color-primary-hsl) / 0.8)) 
+            drop-shadow(0 0 30px hsl(var(--color-primary-hsl) / 0.4));
+  }
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--color-surface-hsl) / 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, 
+    hsl(var(--color-primary-hsl) / 0.6), 
+    hsl(var(--color-primary-hsl) / 0.3));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, 
+    hsl(var(--color-primary-hsl) / 0.8), 
+    hsl(var(--color-primary-hsl) / 0.5));
 }

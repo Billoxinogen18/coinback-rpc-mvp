@@ -43,15 +43,15 @@ const ConnectWallet = () => {
 
   return (
     <div className="flex items-center space-x-3">
-      <div className="btn" title={walletAddress}>
-        <CheckCircle size={18} className="text-green-500" />
+      <div className="btn bg-surface/50 text-textSecondary" title={walletAddress}>
+        <CheckCircle size={18} className="text-green-400" />
         <span>{`${walletAddress.substring(0, 6)}...${walletAddress.substring(walletAddress.length - 4)}`}</span>
       </div>
       {isAuthenticated ? (
         <button onClick={signOut} className="btn-secondary"><LogOut size={16}/><span>Sign Out</span></button>
       ) : (
         <button onClick={signInAction} disabled={loadingAuth} className="btn-primary">
-          {loadingAuth ? <Loader2 size={18} className="animate-spin"/> : <LogIn size={18}/>}
+          {loadingAuth ? <Loader2 size={16} className="animate-spin"/> : <LogIn size={16}/>}
           <span>{loadingAuth ? 'Verifying...' : 'Sign In'}</span>
         </button>
       )}

@@ -4,12 +4,20 @@ import { ethers } from 'ethers';
 import StakingABI from '../abi/Staking.json';
 import ERC20ABI from '../abi/ERC20.json';
 import toast from 'react-hot-toast';
-import { Database, Check, ChevronUp, ChevronDown, Loader2 } from 'lucide-react';
+import { Database, Check, ChevronUp, ChevronDown, Loader2, Coins, TrendingUp } from 'lucide-react';
 
-const StatCard = ({ label, value, isPrimary = false }) => (
-  <div className="bg-bgBase p-4 rounded-xl text-center" style={{ boxShadow: 'var(--shadow-in)' }}>
-    <p className="text-sm font-medium text-textSecondary">{label}</p>
-    <p className={`text-2xl font-bold ${isPrimary ? 'text-primary' : 'text-textPrimary'}`}>{value}</p>
+const StatCard = ({ label, value, isPrimary = false, icon: Icon, subtitle }) => (
+  <div className={`${isPrimary ? 'stat-card-primary' : 'stat-card'} group hover:scale-105 transition-transform duration-200`}>
+    <div className="flex items-center justify-center mb-3">
+      {Icon && <Icon size={24} className={`${isPrimary ? 'text-primary' : 'text-textSecondary'} drop-shadow-sm`} />}
+    </div>
+    <p className="text-xs font-medium text-textMuted uppercase tracking-wider mb-1">{label}</p>
+    <p className={`text-2xl font-bold mb-1 ${isPrimary ? 'text-primary text-glow-primary' : 'text-textPrimary'}`}>
+      {value}
+    </p>
+    {subtitle && (
+      <p className="text-xs text-textMuted">{subtitle}</p>
+    )}
   </div>
 );
 
@@ -118,36 +126,36 @@ const CbkPanel = ({ onAction }) => {
   const stakedCbkFormatted = parseFloat(ethers.formatUnits(userProfile.staked_cbk || '0', 18)).toLocaleString(undefined, {maximumFractionDigits: 2});
 
   return (
-    <div className="card space-y-6">
-      <h2 className="text-2xl font-bold flex items-center">
-        <Database size={24} className="mr-3 text-primary"/>
-        CBK Staking
-      </h2>
+    <div className="card space-y-8">
+      <div className="flex items-center gap-3">
+        <Database size={20} className="text-primary"/>
+        <h2 className="text-xl font-bold">CBK Staking</h2>
+      </div>
       
       <div className="grid grid-cols-2 gap-4">
-        <StatCard label="Wallet Balance" value={cbkBalanceFormatted} />
-        <StatCard label="Amount Staked" value={stakedCbkFormatted} isPrimary />
+        <StatCard label="Wallet Balance" value={cbkBalanceFormatted} icon={Coins} subtitle="CBK"/>
+        <StatCard label="Amount Staked" value={stakedCbkFormatted} isPrimary icon={TrendingUp} subtitle="CBK"/>
       </div>
 
       <div className="space-y-6 pt-2">
-        <form onSubmit={handleStake} className="space-y-3">
+        <form onSubmit={handleStake} className="space-y-4">
           <input type="number" value={stakeAmount} onChange={e => setStakeAmount(e.target.value)} className="input-field" placeholder="Amount to stake"/>
           {needsApproval() ? (
-            <button type="button" onClick={handleApprove} disabled={isApproving || isProcessing} className="btn w-full bg-accent/80 text-white hover:bg-accent">
-              {isApproving ? <Loader2 className="animate-spin" /> : <Check size={20} />}
-              Approve CBK
+            <button type="button" onClick={handleApprove} disabled={isApproving || isProcessing} className="btn-accent w-full">
+              {(isApproving) ? <Loader2 className="animate-spin-slow" /> : <Check size={20} />}
+              Approve CBK Spend
             </button>
           ) : (
-            <button type="submit" disabled={isProcessing || isApproving || !stakeAmount} className="btn-primary w-full">
-              {isProcessing ? <Loader2 className="animate-spin" /> : <ChevronUp size={20} />}
+            <button type="submit" disabled={isProcessing || !stakeAmount} className="btn-primary w-full">
+              {isProcessing && !isApproving ? <Loader2 className="animate-spin-slow" /> : <ChevronUp size={20} />}
               Stake
             </button>
           )}
         </form>
-        <form onSubmit={handleUnstake} className="space-y-3">
+        <form onSubmit={handleUnstake} className="space-y-4">
           <input type="number" value={unstakeAmount} onChange={e => setUnstakeAmount(e.target.value)} className="input-field" placeholder="Amount to unstake"/>
-          <button type="submit" disabled={isProcessing || isApproving || !unstakeAmount} className="btn-secondary w-full">
-            {isProcessing ? <Loader2 className="animate-spin" /> : <ChevronDown size={20} />}
+          <button type="submit" disabled={isProcessing || !unstakeAmount} className="btn-secondary w-full">
+            {isProcessing ? <Loader2 className="animate-spin-slow" /> : <ChevronDown size={20} />}
             Unstake
           </button>
         </form>
