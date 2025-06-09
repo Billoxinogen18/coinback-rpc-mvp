@@ -16,7 +16,7 @@ const RpcConfiguration = () => {
       setTimeout(() => setCopied(false), 2500);
     });
   };
-  
+
   const handleAddToWallet = async () => {
     if (typeof window.ethereum === 'undefined') {
       return toast.error('MetaMask not installed.');
@@ -61,4 +61,5 @@ const RpcConfiguration = () => {
     </div>
   );
 };
+
 export default RpcConfiguration;
