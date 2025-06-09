@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { ethers } from 'ethers';
 import StakingABI from '../abi/Staking.json';
@@ -6,10 +6,69 @@ import ERC20ABI from '../abi/ERC20.json';
 import toast from 'react-hot-toast';
 import { Database, Check, ChevronUp, ChevronDown, Loader2, Coins, TrendingUp } from 'lucide-react';
 
+const useMousePosition = () => {
+  const [mousePosition, setMousePosition] = useState({ x: null, y: null });
+
+  useEffect(() => {
+    const updateMousePosition = ev => {
+      setMousePosition({ x: ev.clientX, y: ev.clientY });
+    };
+    window.addEventListener('mousemove', updateMousePosition);
+    return () => {
+      window.removeEventListener('mousemove', updateMousePosition);
+    };
+  }, []);
+
+  return mousePosition;
+};
+
+const CardWrapper = ({ children, className }) => {
+  const cardRef = useRef(null);
+  const { x, y } = useMousePosition();
+
+  useEffect(() => {
+    if (cardRef.current) {
+      const rect = cardRef.current.getBoundingClientRect();
+      const auroraX = ((x - rect.left) / rect.width) * 100;
+      const auroraY = ((y - rect.top) / rect.height) * 100;
+      cardRef.current.style.setProperty('--aurora-x', `${auroraX}%`);
+      cardRef.current.style.setProperty('--aurora-y', `${auroraY}%`);
+    }
+  }, [x, y]);
+
+  return (
+    <div ref={cardRef} className={className}>
+      {children}
+    </div>
+  );
+};
+
+const ButtonWrapper = ({ children, onClick, disabled, className }) => {
+    const btnRef = useRef(null);
+    const { x, y } = useMousePosition();
+  
+    useEffect(() => {
+      if (btnRef.current) {
+        const rect = btnRef.current.getBoundingClientRect();
+        const spotlightX = ((x - rect.left) / rect.width) * 100;
+        const spotlightY = ((y - rect.top) / rect.height) * 100;
+        btnRef.current.style.setProperty('--spotlight-x', `${spotlightX}%`);
+        btnRef.current.style.setProperty('--spotlight-y', `${spotlightY}%`);
+      }
+    }, [x, y]);
+  
+    return (
+      <button ref={btnRef} onClick={onClick} disabled={disabled} className={className}>
+        {children}
+      </button>
+    );
+  };
+  
+
 const StatCard = ({ label, value, isPrimary = false, icon: Icon, subtitle }) => (
   <div className={`${isPrimary ? 'stat-card-primary' : 'stat-card'} group hover:scale-105 transition-transform duration-200`}>
     <div className="flex items-center justify-center mb-3">
-      {Icon && <Icon size={24} className={`${isPrimary ? 'text-primary' : 'text-textSecondary'} drop-shadow-sm`} />}
+      {Icon && <Icon size={24} className={`${isPrimary ? 'text-primary' : 'text-textSecondary'} icon-neumorphic`} />}
     </div>
     <p className="text-xs font-medium text-textMuted uppercase tracking-wider mb-1">{label}</p>
     <p className={`text-2xl font-bold mb-1 ${isPrimary ? 'text-primary text-glow-primary' : 'text-textPrimary'}`}>
@@ -126,9 +185,9 @@ const CbkPanel = ({ onAction }) => {
   const stakedCbkFormatted = parseFloat(ethers.formatUnits(userProfile.staked_cbk || '0', 18)).toLocaleString(undefined, {maximumFractionDigits: 2});
 
   return (
-    <div className="card space-y-8">
+    <CardWrapper className="card space-y-8">
       <div className="flex items-center gap-3">
-        <Database size={20} className="text-primary"/>
+        <Database size={20} className="text-primary icon-neumorphic"/>
         <h2 className="text-xl font-bold">CBK Staking</h2>
       </div>
       
@@ -141,26 +200,26 @@ const CbkPanel = ({ onAction }) => {
         <form onSubmit={handleStake} className="space-y-4">
           <input type="number" value={stakeAmount} onChange={e => setStakeAmount(e.target.value)} className="input-field" placeholder="Amount to stake"/>
           {needsApproval() ? (
-            <button type="button" onClick={handleApprove} disabled={isApproving || isProcessing} className="btn-accent w-full">
-              {(isApproving) ? <Loader2 className="animate-spin-slow" /> : <Check size={20} />}
+            <ButtonWrapper onClick={handleApprove} disabled={isApproving || isProcessing} className="btn-accent w-full">
+              {(isApproving) ? <Loader2 className="animate-spin-slow" /> : <Check size={20} className="icon-neumorphic"/>}
               Approve CBK Spend
-            </button>
+            </ButtonWrapper>
           ) : (
-            <button type="submit" disabled={isProcessing || !stakeAmount} className="btn-primary w-full">
-              {isProcessing && !isApproving ? <Loader2 className="animate-spin-slow" /> : <ChevronUp size={20} />}
+            <ButtonWrapper onClick={handleStake} disabled={isProcessing || !stakeAmount} className="btn-primary w-full">
+              {isProcessing && !isApproving ? <Loader2 className="animate-spin-slow" /> : <ChevronUp size={20} className="icon-neumorphic"/>}
               Stake
-            </button>
+            </ButtonWrapper>
           )}
         </form>
         <form onSubmit={handleUnstake} className="space-y-4">
           <input type="number" value={unstakeAmount} onChange={e => setUnstakeAmount(e.target.value)} className="input-field" placeholder="Amount to unstake"/>
-          <button type="submit" disabled={isProcessing || !unstakeAmount} className="btn-secondary w-full">
-            {isProcessing ? <Loader2 className="animate-spin-slow" /> : <ChevronDown size={20} />}
+          <ButtonWrapper onClick={handleUnstake} disabled={isProcessing || !unstakeAmount} className="btn-secondary w-full">
+            {isProcessing ? <Loader2 className="animate-spin-slow" /> : <ChevronDown size={20} className="icon-neumorphic"/>}
             Unstake
-          </button>
+          </ButtonWrapper>
         </form>
       </div>
-    </div>
+    </CardWrapper>
   );
 };
 export default CbkPanel;

@@ -58,6 +58,7 @@ export default {
         'fade-in-up': 'fade-in-up 0.6s ease-out forwards',
         'glow-pulse': 'glow-pulse 2s ease-in-out infinite alternate',
         'spin-slow': 'spin 3s linear infinite',
+        'aurora': 'aurora 8s ease-in-out infinite alternate',
       },
       keyframes: {
         'background-float': {
@@ -89,6 +90,10 @@ export default {
             filter: 'drop-shadow(0 0 20px hsl(var(--color-primary-hsl) / 0.8)) drop-shadow(0 0 30px hsl(var(--color-primary-hsl) / 0.4))'
           }
         },
+        'aurora': {
+          '0%': { backgroundPosition: '0% 50%, 50% 100%, 100% 0%' },
+          '100%': { backgroundPosition: '100% 50%, 0% 0%, 50% 100%' },
+        }
       },
       spacing: {
         '18': '4.5rem',

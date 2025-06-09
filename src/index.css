@@ -110,7 +110,7 @@
 
 @layer components {
   .card {
-    @apply rounded-3xl p-6 sm:p-8 transition-all duration-300 relative overflow-hidden;
+    @apply rounded-3xl p-6 sm:p-8 transition-all duration-300 relative;
     background: 
       linear-gradient(145deg, hsl(var(--color-surface-hsl) / 0.8), hsl(var(--color-surface-hsl) / 0.6));
     backdrop-filter: blur(20px);
@@ -118,27 +118,28 @@
     border: 1px solid hsl(var(--color-glass-border-hsl) / 0.3);
     box-shadow: var(--shadow-out);
     position: relative;
+    --aurora-x: 50%;
+    --aurora-y: 50%;
   }
 
   .card::before {
     content: '';
     position: absolute;
-    top: 0; left: 0;
-    right: 0; bottom: 0;
-    background: linear-gradient(145deg, 
-      hsl(var(--color-shadow-light-hsl) / 0.1) 0%, 
-      transparent 50%, 
-      hsl(var(--color-shadow-dark-hsl) / 0.1) 100%);
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: 
+      radial-gradient(
+        circle 400px at var(--aurora-x) var(--aurora-y),
+        hsl(var(--color-primary-hsl) / 0.1),
+        transparent 80%
+      ),
+      radial-gradient(
+        circle 300px at calc(100% - var(--aurora-x)) calc(100% - var(--aurora-y)),
+        hsl(var(--color-accent-hsl) / 0.1),
+        transparent 80%
+      );
     pointer-events: none;
     border-radius: inherit;
-  }
-
-  .card-elevated {
-    @apply card;
-    background: 
-      linear-gradient(145deg, hsl(var(--color-surface-elevated-hsl) / 0.9), hsl(var(--color-surface-elevated-hsl) / 0.7));
-    box-shadow: var(--shadow-out-lg);
-    transform: translateY(-2px);
+    transition: background 0.5s ease-out;
   }
 
   .btn {
@@ -150,17 +151,19 @@
     color: hsl(var(--color-text-secondary-hsl));
     box-shadow: var(--shadow-out);
     border: 1px solid hsl(var(--color-glass-border-hsl) / 0.2);
+    --spotlight-x: 50%;
+    --spotlight-y: 50%;
   }
 
   .btn::before {
     content: '';
     position: absolute;
-    top: 0; left: 0;
-    right: 0; bottom: 0;
-    background: linear-gradient(145deg, 
-      hsl(var(--color-shadow-light-hsl) / 0.1) 0%, 
-      transparent 50%, 
-      hsl(var(--color-shadow-dark-hsl) / 0.05) 100%);
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(
+      circle 150px at var(--spotlight-x) var(--spotlight-y),
+      hsl(var(--color-shadow-light-hsl) / 0.2),
+      transparent 80%
+    );
     opacity: 0;
     transition: opacity 0.2s ease;
     border-radius: inherit;
@@ -177,42 +180,57 @@
     opacity: 1;
   }
   
+  .btn-primary {
+    @apply btn text-white focus:ring-primary/30;
+    background: linear-gradient(145deg, hsl(var(--color-primary-hsl)), hsl(var(--color-primary-hsl) / 0.8));
+  }
+  
+  .btn-primary::before {
+    background: radial-gradient(
+      circle 150px at var(--spotlight-x) var(--spotlight-y),
+      hsl(var(--color-primary-glow-hsl) / 0.4),
+      transparent 80%
+    );
+  }
+
+  .icon-neumorphic {
+    @apply transition-all duration-200;
+    filter: drop-shadow(1px 1px 1px hsl(var(--color-shadow-dark-hsl) / 0.5)) 
+            drop-shadow(-1px -1px 1px hsl(var(--color-shadow-light-hsl) / 0.8));
+  }
+  .btn:hover .icon-neumorphic {
+    filter: drop-shadow(2px 2px 2px hsl(var(--color-shadow-dark-hsl) / 0.5)) 
+            drop-shadow(-2px -2px 2px hsl(var(--color-shadow-light-hsl) / 0.8))
+            drop-shadow(0 0 5px hsl(var(--color-primary-hsl) / 0.5));
+  }
+}
+
+/* Other styles from Claude's vision remain the same */
+@layer components {
+  .card-elevated {
+    @apply card;
+    background: 
+      linear-gradient(145deg, hsl(var(--color-surface-elevated-hsl) / 0.9), hsl(var(--color-surface-elevated-hsl) / 0.7));
+    box-shadow: var(--shadow-out-lg);
+    transform: translateY(-2px);
+  }
   .btn:not(:disabled):active {
     @apply translate-y-0;
     box-shadow: var(--shadow-pressed);
     transform: translateY(1px);
   }
-  
-  .btn-primary {
-    @apply btn text-white focus:ring-primary/30;
-    background: linear-gradient(145deg, hsl(var(--color-primary-hsl)), hsl(var(--color-primary-hsl) / 0.8));
-    box-shadow: 
-      var(--shadow-out),
-      0 0 20px hsl(var(--color-primary-hsl) / 0.3);
-    border: 1px solid hsl(var(--color-primary-hsl) / 0.5);
-  }
-
-  .btn-primary::before {
-    background: linear-gradient(145deg, 
-      hsl(var(--color-primary-glow-hsl) / 0.2) 0%, 
-      transparent 50%, 
-      hsl(var(--color-primary-hsl) / 0.1) 100%);
-  }
-
   .btn-primary:not(:disabled):hover {
     box-shadow: 
       var(--shadow-out-lg),
       0 0 30px hsl(var(--color-primary-hsl) / 0.5),
       0 0 60px hsl(var(--color-primary-hsl) / 0.2);
   }
-
   .btn-secondary {
     @apply btn focus:ring-primary/20;
     background: linear-gradient(145deg, 
       hsl(var(--color-surface-elevated-hsl) / 0.8), 
       hsl(var(--color-surface-hsl) / 0.9));
   }
-
   .btn-accent {
     @apply btn text-white focus:ring-accent/30;
     background: linear-gradient(145deg, hsl(var(--color-accent-hsl)), hsl(var(--color-accent-hsl) / 0.8));
@@ -221,7 +239,6 @@
       0 0 20px hsl(var(--color-accent-hsl) / 0.3);
     border: 1px solid hsl(var(--color-accent-hsl) / 0.5);
   }
-   
   .input-field {
     @apply w-full h-14 rounded-2xl border-none text-textPrimary text-base px-6
            transition-all duration-200 ease-out placeholder:text-textSecondary/50
@@ -233,13 +250,11 @@
     border: 1px solid hsl(var(--color-glass-border-hsl) / 0.2);
     backdrop-filter: blur(10px);
   }
-
   .input-field:focus {
     box-shadow: 
       var(--shadow-in),
       0 0 0 2px hsl(var(--color-primary-hsl) / 0.3);
   }
-
   .glass-panel {
     @apply rounded-3xl transition-all duration-300 relative overflow-hidden;
     background: hsl(var(--color-surface-hsl) / 0.4);
@@ -248,7 +263,6 @@
     border: 1px solid hsl(var(--color-glass-border-hsl) / 0.3);
     box-shadow: var(--shadow-glass);
   }
-
   .glass-panel::before {
     content: '';
     position: absolute;
@@ -260,7 +274,6 @@
       hsl(var(--color-shadow-light-hsl) / 0.5) 50%, 
       transparent 100%);
   }
-
   .stat-card {
     @apply p-5 rounded-2xl text-center transition-all duration-300 relative overflow-hidden;
     background: linear-gradient(145deg, 
@@ -270,7 +283,6 @@
     border: 1px solid hsl(var(--color-glass-border-hsl) / 0.2);
     backdrop-filter: blur(10px);
   }
-
   .stat-card-primary {
     @apply stat-card;
     background: linear-gradient(145deg, 
@@ -288,45 +300,37 @@
     filter: drop-shadow(0 0 16px hsl(var(--color-primary-hsl) / 0.8)) 
             drop-shadow(0 0 32px hsl(var(--color-primary-hsl) / 0.4));
   }
-
   .drop-shadow-glow-accent {
     filter: drop-shadow(0 0 16px hsl(var(--color-accent-hsl) / 0.7)) 
             drop-shadow(0 0 32px hsl(var(--color-accent-hsl) / 0.3));
   }
-
   .text-glow-primary {
     text-shadow: 
       0 0 10px hsl(var(--color-primary-hsl) / 0.8),
       0 0 20px hsl(var(--color-primary-hsl) / 0.4),
       0 0 40px hsl(var(--color-primary-hsl) / 0.2);
   }
-
   .text-glow-accent {
     text-shadow: 
       0 0 10px hsl(var(--color-accent-hsl) / 0.8),
       0 0 20px hsl(var(--color-accent-hsl) / 0.4);
   }
-  
   .bg-glass {
     background: hsl(var(--color-surface-hsl) / 0.3);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
   }
-
   .bg-glass-strong {
     background: hsl(var(--color-surface-hsl) / 0.6);
     backdrop-filter: blur(30px);
     -webkit-backdrop-filter: blur(30px);
   }
-
   .border-glass {
     border-color: hsl(var(--color-glass-border-hsl) / 0.3);
   }
-
   .animate-fade-in-up {
     animation: fade-in-up 0.6s ease-out forwards;
   }
-
   .animate-glow-pulse {
     animation: glow-pulse 2s ease-in-out infinite alternate;
   }
