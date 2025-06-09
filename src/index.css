@@ -55,9 +55,8 @@
 @layer components {
   /*
     CORRECTION:
-    The build failed because `@apply bg-glass` and `@apply border-glassBorder` were used
-    before Tailwind had a chance to generate those utility classes from the custom theme colors.
-    The fix is to apply the styles directly using the CSS variables.
+    The build was failing because `@apply` was used with custom theme values like `rounded-card`.
+    The definitive fix is to apply these custom theme values directly using `theme()` instead of `@apply`.
   */
   .glass-header {
     background-color: hsla(var(--color-surface-hsl) / 0.7);
@@ -66,11 +65,13 @@
   }
 
   .card {
-    @apply bg-surface rounded-card shadow-card p-6 sm:p-8 animate-fade-in-up;
+    border-radius: theme('borderRadius.card');
+    @apply bg-surface shadow-card p-6 sm:p-8 animate-fade-in-up;
   }
 
   .btn {
-    @apply flex items-center justify-center gap-2 px-5 py-2.5 rounded-btn font-semibold transition-all duration-200 focus:outline-none transform active:scale-[0.97] focus:ring-2 focus:ring-primary/50;
+    border-radius: theme('borderRadius.btn');
+    @apply flex items-center justify-center gap-2 px-5 py-2.5 font-semibold transition-all duration-200 focus:outline-none transform active:scale-[0.97] focus:ring-2 focus:ring-primary/50;
   }
 
   .btn-primary {
@@ -82,6 +83,8 @@
   }
   
   .input-field {
-    @apply w-full h-[58px] p-4 bg-bgBase shadow-inset-soft rounded-btn text-textPrimary placeholder:text-textSecondary/70 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all duration-200;
+    height: 58px;
+    border-radius: theme('borderRadius.btn');
+    @apply w-full p-4 bg-bgBase shadow-inset-soft text-textPrimary placeholder:text-textSecondary/70 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all duration-200;
   }
 }
