@@ -23,13 +23,13 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('coinback_jwt');
     setIsAuthenticated(false);
     setUserProfile(null);
+    setWalletAddress(null); // Ensure wallet address is also cleared
   }, []);
 
   const refreshUserProfile = useCallback(async () => {
     const token = localStorage.getItem('coinback_jwt');
-    if (!token || !walletAddress) {
-        setIsAuthenticated(false);
-        setUserProfile(null);
+    if (!token) {
+        clearSession();
         return;
     };
     try {
@@ -41,9 +41,10 @@ export const AuthProvider = ({ children }) => {
         throw new Error("Invalid profile data received");
       }
     } catch (error) {
+      console.error("Profile refresh failed:", error.message);
       clearSession();
     }
-  }, [clearSession, walletAddress]);
+  }, [clearSession]);
 
   const autoConnectAndRefresh = useCallback(async () => {
     setLoadingAuth(true);
@@ -99,9 +100,18 @@ export const AuthProvider = ({ children }) => {
       const { success, token, message } = await verifySiweSignature(siweMessage, signature);
       if (!success || !token) throw new Error(message || "Signature verification failed.");
 
+      // --- THE DEFINITIVE FIX ---
+      // 1. Save the token to local storage.
       localStorage.setItem('coinback_jwt', token);
+      
+      // 2. Set the state variables. This will trigger a re-render.
       setWalletAddress(address);
-      await refreshUserProfile();
+      setIsAuthenticated(true);
+      
+      // 3. Let the automatic re-render handle the profile fetch. DO NOT call it here.
+      // The Dashboard component will now mount and fetch its own data correctly.
+      await refreshUserProfile(); // We call it here to ensure data is fresh right after login.
+
       toast.success("Sign-in successful!");
 
     } catch (error) {
@@ -115,7 +125,7 @@ export const AuthProvider = ({ children }) => {
   const value = useMemo(() => ({
     walletAddress, setWalletAddress, userProfile, isAuthenticated,
     loadingAuth, signInWithEthereum, signOut: clearSession, refreshUserProfile
-  }), [userProfile, walletAddress, isAuthenticated, loadingAuth, clearSession, refreshUserProfile, signInWithEthereum]);
+  }), [userProfile, walletAddress, isAuthenticated, loadingAuth, clearSession, refreshUserProfile]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
