@@ -4,9 +4,9 @@ import { Settings, Copy, CheckCircle } from 'lucide-react';
 
 const RpcConfiguration = () => {
   const rpcUrl = import.meta.env.VITE_COINBACK_RPC_URL;
-  const chainId = '11155111'; 
+  const chainId = '11155111';
   const networkName = 'Coinback RPC (Sepolia)';
-  const currencySymbol = 'SepoliaETH';
+  const currencySymbol = 'ETH';
   const [copied, setCopied] = useState(false);
 
   const handleCopyRpcUrl = () => {
