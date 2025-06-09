@@ -28,7 +28,12 @@ const handleResponse = async (response) => {
 };
 
 export const getSiweNonce = (address) => {
-    return fetch(`${API_BASE_URL}/api/users/${address}/siwe-nonce`).then(handleResponse);
+    // DEFINITIVE FIX: Add a unique query parameter to "bust" the CDN cache.
+    // This forces CloudFront to request a new nonce from the backend every time.
+    const cacheBuster = `?t=${new Date().getTime()}`;
+    return fetch(`${API_BASE_URL}/api/users/${address}/siwe-nonce${cacheBuster}`, {
+        method: 'GET',
+    }).then(handleResponse);
 };
 
 export const verifySiweSignature = (message, signature) => {
