@@ -28,8 +28,6 @@ const handleResponse = async (response) => {
 };
 
 export const getSiweNonce = (address) => {
-    // DEFINITIVE FIX: Add a unique query parameter to "bust" the CDN cache.
-    // This forces CloudFront to request a new nonce from the backend every time.
     const cacheBuster = `?t=${new Date().getTime()}`;
     return fetch(`${API_BASE_URL}/api/users/${address}/siwe-nonce${cacheBuster}`, {
         method: 'GET',
@@ -45,13 +43,16 @@ export const verifySiweSignature = (message, signature) => {
 };
 
 export const getUserProfile = () => {
-    return fetch(`${API_BASE_URL}/api/users/profile`, { headers: getHeaders() }).then(handleResponse);
+    const cacheBuster = `?t=${new Date().getTime()}`;
+    return fetch(`${API_BASE_URL}/api/users/profile${cacheBuster}`, { headers: getHeaders() }).then(handleResponse);
 };
 
 export const getTransactions = () => {
-    return fetch(`${API_BASE_URL}/api/users/transactions`, { headers: getHeaders() }).then(handleResponse);
+    const cacheBuster = `?t=${new Date().getTime()}`;
+    return fetch(`${API_BASE_URL}/api/users/transactions${cacheBuster}`, { headers: getHeaders() }).then(handleResponse);
 };
 
 export const getClaimableRewards = () => {
-    return fetch(`${API_BASE_URL}/api/rewards/claimable`, { headers: getHeaders() }).then(handleResponse);
+    const cacheBuster = `?t=${new Date().getTime()}`;
+    return fetch(`${API_BASE_URL}/api/rewards/claimable${cacheBuster}`, { headers: getHeaders() }).then(handleResponse);
 };
