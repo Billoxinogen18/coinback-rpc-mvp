@@ -23,15 +23,15 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('coinback_jwt');
     setIsAuthenticated(false);
     setUserProfile(null);
-    setWalletAddress(null); // Ensure wallet address is also cleared
+    setWalletAddress(null);
   }, []);
 
   const refreshUserProfile = useCallback(async () => {
     const token = localStorage.getItem('coinback_jwt');
     if (!token) {
-        clearSession();
-        return;
-    };
+      clearSession();
+      return;
+    }
     try {
       const profileData = await getUserProfile();
       if (profileData && profileData.user_id) {
@@ -50,18 +50,18 @@ export const AuthProvider = ({ children }) => {
     setLoadingAuth(true);
     const token = localStorage.getItem('coinback_jwt');
     try {
-        if (!window.ethereum) {
-          throw new Error("No wallet detected");
-        }
-        const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-        const currentAddress = accounts?.[0] || null;
-        setWalletAddress(currentAddress);
+      if (!window.ethereum) {
+        throw new Error("No wallet detected");
+      }
+      const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+      const currentAddress = accounts?.[0] || null;
+      setWalletAddress(currentAddress);
 
-        if (token && currentAddress) {
-            await refreshUserProfile();
-        } else {
-            clearSession();
-        }
+      if (token && currentAddress) {
+        await refreshUserProfile();
+      } else {
+        clearSession();
+      }
     } catch (err) {
       clearSession();
     } finally {
@@ -72,6 +72,15 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     autoConnectAndRefresh();
   }, [autoConnectAndRefresh]);
+
+  // --- THE DEFINITIVE FIX: Part 1 ---
+  // This useEffect hook declaratively handles fetching the user profile
+  // *after* isAuthenticated becomes true, solving the race condition.
+  useEffect(() => {
+    if (isAuthenticated && walletAddress && !userProfile) {
+      refreshUserProfile();
+    }
+  }, [isAuthenticated, walletAddress, userProfile, refreshUserProfile]);
 
 
   const signInWithEthereum = async (provider, address) => {
@@ -100,17 +109,13 @@ export const AuthProvider = ({ children }) => {
       const { success, token, message } = await verifySiweSignature(siweMessage, signature);
       if (!success || !token) throw new Error(message || "Signature verification failed.");
 
-      // --- THE DEFINITIVE FIX ---
-      // 1. Save the token to local storage.
+      // --- THE DEFINITIVE FIX: Part 2 ---
+      // 1. Save the token.
       localStorage.setItem('coinback_jwt', token);
       
-      // 2. Set the state variables. This will trigger a re-render.
+      // 2. Set the state. This will trigger the useEffect above.
       setWalletAddress(address);
       setIsAuthenticated(true);
-      
-      // 3. Let the automatic re-render handle the profile fetch. DO NOT call it here.
-      // The Dashboard component will now mount and fetch its own data correctly.
-      await refreshUserProfile(); // We call it here to ensure data is fresh right after login.
 
       toast.success("Sign-in successful!");
 
