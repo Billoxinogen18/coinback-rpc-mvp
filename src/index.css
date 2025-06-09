@@ -4,24 +4,24 @@
 
 @layer base {
   :root {
-    --color-bg-base-hsl: 220 30% 98%;
-    --color-surface-hsl: 220 30% 100%;
-    --color-text-primary-hsl: 224 25% 15%;
-    --color-text-secondary-hsl: 220 15% 55%;
-    --color-primary-hsl: 220 85% 60%;
-    --color-accent-hsl: 180 80% 45%;
-    --color-shadow-hsl: 224 30% 10%;
+    --color-bg-base-hsl: 226 25% 10%;
+    --color-surface-hsl: 226 25% 15%;
+    --color-text-primary-hsl: 220 25% 95%;
+    --color-text-secondary-hsl: 220 15% 65%;
+    --color-primary-hsl: 230 85% 70%;
+    --color-accent-hsl: 330 85% 70%;
+    --color-shadow-hsl: 226 30% 0%;
   }
  
   @media (prefers-color-scheme: dark) {
     :root {
-      --color-bg-base-hsl: 226 20% 10%;
-      --color-surface-hsl: 226 20% 13%;
-      --color-text-primary-hsl: 220 20% 95%;
-      --color-text-secondary-hsl: 220 10% 65%;
-      --color-primary-hsl: 220 85% 65%;
-      --color-accent-hsl: 180 80% 50%;
-      --color-shadow-hsl: 226 25% 5%;
+      --color-bg-base-hsl: 226 25% 10%;
+      --color-surface-hsl: 226 25% 15%;
+      --color-text-primary-hsl: 220 25% 95%;
+      --color-text-secondary-hsl: 220 15% 65%;
+      --color-primary-hsl: 230 85% 70%;
+      --color-accent-hsl: 330 85% 70%;
+      --color-shadow-hsl: 226 30% 0%;
     }
   }
 
@@ -36,16 +36,39 @@
     position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
+    width: 100vw;
+    height: 100vh;
     z-index: -1;
-    background: radial-gradient(circle at 10% 20%, hsla(var(--color-primary-hsl), 0.15), transparent 40%),
-                radial-gradient(circle at 90% 80%, hsla(var(--color-accent-hsl), 0.15), transparent 40%);
-    animation: background-pan 20s alternate infinite;
+    background: linear-gradient(
+      125deg, 
+      hsla(var(--color-primary-hsl), 0.15), 
+      hsla(var(--color-accent-hsl), 0.15) 35%,
+      hsla(var(--color-primary-hsl), 0.15) 70%,
+      hsla(var(--color-accent-hsl), 0.2)
+    );
+    background-size: 400% 400%;
+    animation: background-pan 30s ease infinite;
+  }
+}
+
+@layer components {
+  .card {
+    @apply bg-glass backdrop-blur-xl border border-glassBorder rounded-card shadow-card p-6 sm:p-8 transition-all duration-300;
   }
 
-  @keyframes background-pan {
-    from { transform: translate(0%, 0%); }
-    to { transform: translate(-10%, -10%); }
+  .btn {
+    @apply flex items-center justify-center gap-2 px-5 py-3 rounded-btn font-semibold transition-all duration-200 focus:outline-none transform active:scale-[0.97] focus:ring-2 focus:ring-offset-2 focus:ring-offset-bgBase focus:ring-primary/50 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-primary {
+    @apply btn bg-primary text-white shadow-button hover:shadow-button-hover;
+  }
+  
+  .btn-secondary {
+    @apply btn bg-surface text-textPrimary shadow-button hover:shadow-button-hover;
+  }
+
+  .input-field {
+    @apply w-full h-[58px] bg-bgBase rounded-btn border-none shadow-inset-soft text-textPrimary text-base px-5 focus:outline-none focus:ring-2 focus:ring-primary/80;
   }
 }
