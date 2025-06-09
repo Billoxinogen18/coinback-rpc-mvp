@@ -4,33 +4,28 @@
 
 @layer base {
   :root {
-    --color-bg-base-hsl: 210 20% 98%;
-    --color-surface-hsl: 210 30% 96%;
-    --color-text-primary-hsl: 210 10% 23%;
-    --color-text-secondary-hsl: 210 10% 45%;
-    --color-primary-hsl: 217 91% 60%;
-    --color-accent-hsl: 43 98% 59%;
-    --color-shadow-light-hsl: 210 30% 100%;
-    --color-shadow-dark-hsl: 210 20% 88%;
-    --shadow-light-opacity: 1;
+    --color-bg-base-hsl: 224 25% 96%;
+    --color-surface-hsl: 224 25% 96%;
+    --color-text-primary-hsl: 220 15% 25%;
+    --color-text-secondary-hsl: 220 10% 50%;
+    --color-primary-hsl: 240 90% 65%;
+    --color-accent-hsl: 330 95% 60%;
+    --color-shadow-light-hsl: 0 0% 100%;
+    --color-shadow-dark-hsl: 224 20% 88%;
+    --shadow-light-opacity: 0.9;
     --shadow-dark-opacity: 1;
   }
-
-
-
-
-  
  
   @media (prefers-color-scheme: dark) {
     :root {
-      --color-bg-base-hsl: 220 20% 12%;
-      --color-surface-hsl: 220 20% 15%;
-      --color-text-primary-hsl: 210 20% 98%;
+      --color-bg-base-hsl: 226 20% 10%;
+      --color-surface-hsl: 226 20% 12%;
+      --color-text-primary-hsl: 220 20% 95%;
       --color-text-secondary-hsl: 220 10% 65%;
-      --color-primary-hsl: 217 91% 60%;
-      --color-accent-hsl: 43 98% 59%;
-      --color-shadow-light-hsl: 220 20% 18%;
-      --color-shadow-dark-hsl: 220 20% 8%;
+      --color-primary-hsl: 240 90% 70%;
+      --color-accent-hsl: 330 95% 65%;
+      --color-shadow-light-hsl: 226 20% 15%;
+      --color-shadow-dark-hsl: 225 20% 6%;
       --shadow-light-opacity: 1;
       --shadow-dark-opacity: 1;
     }
@@ -42,26 +37,49 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+
+  body::before {
+    content: '';
+    position: fixed;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at center, hsla(var(--color-primary-hsl)/0.1), transparent 40%),
+                radial-gradient(circle at 80% 20%, hsla(var(--color-accent-hsl)/0.1), transparent 30%),
+                radial-gradient(circle at 20% 80%, hsla(var(--color-primary-hsl)/0.05), transparent 35%);
+    z-index: -1;
+    animation: background-pan 30s linear infinite;
+  }
+
+  @keyframes background-pan {
+    0% { transform: rotate(0deg) scale(1); }
+    100% { transform: rotate(360deg) scale(1); }
+  }
 }
 
 @layer components {
   .glassmorphic {
-    @apply bg-glassOverlay backdrop-blur-xl border border-glassBorder shadow-glass rounded-t-none;
+    @apply bg-glassOverlay backdrop-blur-lg border border-glassBorder shadow-glass rounded-t-none;
   }
 
+  .card-base {
+    @apply p-6 lg:p-8 animate-fade-in-up transition-all duration-300;
+  }
+  
   .neumorphic-outset {
     @apply bg-surface shadow-neo-outset rounded-neo-lg;
   }
-  
-  .card-base {
-    @apply p-6 lg:p-8 animate-fade-in-up;
-  }
 
   .neumorphic-button {
-    @apply px-6 py-3 font-semibold shadow-neo-button-default active:shadow-neo-button-active rounded-neo-lg transition-all duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none flex items-center justify-center space-x-2.5;
+    @apply px-6 py-3 font-semibold shadow-neo-button active:shadow-neo-button-active rounded-neo transition-all duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none flex items-center justify-center gap-2.5 transform active:scale-[0.98];
   }
 
   .neumorphic-input {
-    @apply w-full p-3.5 bg-surface shadow-neo-inset rounded-neo text-textPrimary placeholder:text-textSecondary/70 focus:shadow-neo-outset focus:outline-none transition-shadow duration-150 ease-in-out;
+    @apply w-full p-4 bg-bgBase shadow-neo-inset rounded-neo text-textPrimary placeholder:text-textSecondary/60 focus:shadow-neo-outset focus:outline-none transition-shadow duration-200 ease-in-out;
+  }
+
+  .glow-on-hover:hover {
+    @apply shadow-glow-primary;
   }
 }

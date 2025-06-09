@@ -41,43 +41,43 @@ const Dashboard = ({ onDataChange }) => {
   }
   
   return (
-    <div className="space-y-6 lg:space-y-8">
-      <div className="neumorphic-outset card-base">
+    <div className="space-y-8 lg:space-y-10">
+      <div className="neumorphic-outset card-base transition-transform hover:scale-[1.02]">
         <h2 className="text-2xl font-bold flex items-center mb-6">
           <Gift className="mr-3 text-primary" />
           Rewards Overview
         </h2>
-        <div className="neumorphic-outset p-6 rounded-neo text-center bg-surface">
+        <div className="neumorphic-outset p-6 rounded-neo text-center bg-surface animate-pulse-glow">
             <p className="text-sm font-semibold text-textSecondary uppercase tracking-wider">Total Rewards Earned (All-Time)</p>
             <p className="text-4xl font-bold text-accent mt-2">{totalRewards} <span className="text-2xl font-medium text-textSecondary">ETH</span></p>
         </div>
       </div>
 
-      <div className="neumorphic-outset card-base">
+      <div className="neumorphic-outset card-base transition-transform hover:scale-[1.02]">
         <h2 className="text-2xl font-bold flex items-center mb-6">
           <ListChecks className="mr-3 text-primary" />
           Recent Transaction History
         </h2>
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto neumorphic-outset rounded-neo p-2">
           {transactions.length > 0 ? (
             <table className="min-w-full text-sm">
-              <thead className="border-b-2 border-shadowDark/50">
+              <thead className="border-b-2 border-glassBorder">
                 <tr>
-                  <th className="text-left p-3 font-semibold text-textSecondary">TX Hash</th>
-                  <th className="text-left p-3 font-semibold text-textSecondary">Status</th>
-                  <th className="text-right p-3 font-semibold text-textSecondary">Cashback Generated</th>
+                  <th className="text-left p-4 font-semibold text-textSecondary">TX Hash</th>
+                  <th className="text-left p-4 font-semibold text-textSecondary">Status</th>
+                  <th className="text-right p-4 font-semibold text-textSecondary">Cashback Generated</th>
                 </tr>
               </thead>
               <tbody>
                 {transactions.map(tx => (
-                  <tr key={tx.transaction_pk} className="border-b border-surface dark:border-shadowDark/20 hover:bg-surface/50 transition-colors">
-                    <td className="p-3 font-mono text-xs text-blue-500">
+                  <tr key={tx.transaction_pk} className="border-b border-glassBorder last:border-b-0 hover:bg-surface transition-colors">
+                    <td className="p-4 font-mono text-xs text-blue-500 dark:text-blue-400">
                       <a href={`https://sepolia.etherscan.io/tx/${tx.client_tx_hash}`} target="_blank" rel="noopener noreferrer" className="hover:underline" title={tx.client_tx_hash}>
                         {`${tx.client_tx_hash.substring(0, 10)}...${tx.client_tx_hash.substring(tx.client_tx_hash.length - 8)}`}
                       </a>
                     </td>
-                    <td className="p-3 text-textPrimary capitalize">{tx.final_status?.replace(/_/g, ' ') || 'Unknown'}</td>
-                    <td className="p-3 text-right font-semibold text-green-500">
+                    <td className="p-4 text-textPrimary capitalize">{tx.final_status?.replace(/_/g, ' ') || 'Unknown'}</td>
+                    <td className="p-4 text-right font-semibold text-green-500">
                       {tx.profit_share_contributed && BigInt(tx.profit_share_contributed) > 0 
                         ? `+${ethers.formatEther(tx.profit_share_contributed)} ETH` 
                         : <span className="text-textSecondary/50">N/A</span>}
@@ -99,4 +99,3 @@ const Dashboard = ({ onDataChange }) => {
   );
 };
 export default Dashboard;
-

@@ -79,20 +79,24 @@ const CbkPanel = ({ onAction }) => {
 
   const handleStake = (e) => {
     e.preventDefault();
-    const amount = ethers.parseUnits(stakeAmount || '0', 18);
+    if (!stakeAmount) return;
+    const amount = ethers.parseUnits(stakeAmount, 18);
     const provider = new ethers.BrowserProvider(window.ethereum);
-    const signer = provider.getSigner();
-    const stakingContract = new ethers.Contract(stakingContractAddress, StakingABI.abi, signer);
-    executeOnChainTx(stakingContract.stake(amount), 'Staking CBK...', 'Stake successful!');
+    provider.getSigner().then(signer => {
+      const stakingContract = new ethers.Contract(stakingContractAddress, StakingABI.abi, signer);
+      executeOnChainTx(stakingContract.stake(amount), 'Staking CBK...', 'Stake successful!');
+    });
   };
   
   const handleUnstake = (e) => {
     e.preventDefault();
-    const amount = ethers.parseUnits(unstakeAmount || '0', 18);
+    if (!unstakeAmount) return;
+    const amount = ethers.parseUnits(unstakeAmount, 18);
     const provider = new ethers.BrowserProvider(window.ethereum);
-    const signer = provider.getSigner();
-    const stakingContract = new ethers.Contract(stakingContractAddress, StakingABI.abi, signer);
-    executeOnChainTx(stakingContract.unstake(amount), 'Unstaking CBK...', 'Unstake successful!');
+    provider.getSigner().then(signer => {
+      const stakingContract = new ethers.Contract(stakingContractAddress, StakingABI.abi, signer);
+      executeOnChainTx(stakingContract.unstake(amount), 'Unstaking CBK...', 'Unstake successful!');
+    });
   };
   
   if (!userProfile) return null;
@@ -100,7 +104,7 @@ const CbkPanel = ({ onAction }) => {
   const stakedCbkFormatted = parseFloat(ethers.formatUnits(userProfile.staked_cbk || '0', 18)).toLocaleString(undefined, {maximumFractionDigits: 2});
 
   return (
-    <div className="neumorphic-outset card-base space-y-6">
+    <div className="neumorphic-outset card-base space-y-6 transition-transform hover:scale-[1.02]">
       <div className="flex items-center text-textPrimary">
         <Database size={24} className="mr-3 text-primary"/>
         <h2 className="text-2xl font-bold">CBK Staking</h2>
@@ -113,14 +117,14 @@ const CbkPanel = ({ onAction }) => {
         <form onSubmit={handleStake} className="space-y-3">
           <input type="number" value={stakeAmount} onChange={e => setStakeAmount(e.target.value)} className="neumorphic-input" placeholder="Amount to stake"/>
           {needsApproval() ? (
-            <button type="button" onClick={handleApprove} disabled={isProcessing} className="neumorphic-button w-full bg-accent text-white dark:text-bgBase"><Check size={20} />Approve CBK</button>
+            <button type="button" onClick={handleApprove} disabled={isProcessing} className="neumorphic-button w-full bg-accent text-white dark:text-bgBase shadow-glow-accent hover:shadow-none transition-shadow"><Check size={20} />Approve CBK</button>
           ) : (
-            <button type="submit" disabled={isProcessing || !stakeAmount} className="neumorphic-button w-full"><ChevronUp size={20}/>Stake</button>
+            <button type="submit" disabled={isProcessing || !stakeAmount} className="neumorphic-button w-full bg-primary text-white dark:text-bgBase glow-on-hover"><ChevronUp size={20}/>Stake</button>
           )}
         </form>
         <form onSubmit={handleUnstake} className="space-y-3">
           <input type="number" value={unstakeAmount} onChange={e => setUnstakeAmount(e.target.value)} className="neumorphic-input" placeholder="Amount to unstake"/>
-          <button type="submit" disabled={isProcessing || !unstakeAmount} className="neumorphic-button w-full"><ChevronDown size={20}/>Unstake</button>
+          <button type="submit" disabled={isProcessing || !unstakeAmount} className="neumorphic-button w-full glow-on-hover"><ChevronDown size={20}/>Unstake</button>
         </form>
       </div>
     </div>

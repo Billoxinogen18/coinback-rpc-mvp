@@ -38,7 +38,7 @@ const ConnectWallet = () => {
   }, [provider, walletAddress, signInWithEthereum]);
   
   if (!walletAddress) {
-    return <button onClick={connectAction} className="neumorphic-button bg-accent text-white dark:text-bgBase"><Wallet size={18} /><span>Connect Wallet</span></button>;
+    return <button onClick={connectAction} className="neumorphic-button bg-accent text-white dark:text-bgBase shadow-glow-accent transition-shadow duration-300 hover:shadow-none"><Wallet size={18} /><span>Connect Wallet</span></button>;
   }
 
   return (
@@ -47,9 +47,9 @@ const ConnectWallet = () => {
         <CheckCircle size={18} className="text-green-500" /><span>{`${walletAddress.substring(0, 6)}...${walletAddress.substring(walletAddress.length - 4)}`}</span>
       </div>
       {isAuthenticated ? (
-        <button onClick={signOut} className="neumorphic-button"><LogOut size={16}/><span>Sign Out</span></button>
+        <button onClick={signOut} className="neumorphic-button glow-on-hover"><LogOut size={16}/><span>Sign Out</span></button>
       ) : (
-        <button onClick={signInAction} disabled={loadingAuth} className="neumorphic-button">
+        <button onClick={signInAction} disabled={loadingAuth} className="neumorphic-button bg-primary text-white dark:text-bgBase shadow-glow-primary transition-shadow duration-300 hover:shadow-none">
           {loadingAuth ? <Loader2 size={16} className="animate-spin"/> : <LogIn size={16}/>}
           <span>{loadingAuth ? 'Verifying...' : 'Sign In'}</span>
         </button>
