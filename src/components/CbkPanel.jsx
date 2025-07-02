@@ -81,7 +81,7 @@ const StatCard = ({ label, value, isPrimary = false, icon: Icon, subtitle }) => 
 );
 
 const CbkPanel = ({ onAction }) => {
-  const { walletAddress, userProfile } = useAuth();
+  const { walletAddress, userProfile, refreshUserProfile } = useAuth();
   const [stakeAmount, setStakeAmount] = useState('');
   const [unstakeAmount, setUnstakeAmount] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -142,21 +142,48 @@ const CbkPanel = ({ onAction }) => {
     }
   };
 
-  const executeTx = async (txPromise, { processing, success, error: errorMsg }, onFinally) => {
+  const executeTx = async (
+    txPromise,
+    { processing, success, error: errorMsg },
+    onFinally
+  ) => {
     setIsProcessing(true);
     const toastId = toast.loading(processing);
     try {
+      // 1. Send tx → wait for confirmation
       const tx = await txPromise;
       await tx.wait();
-      toast.success(success, { id: toastId });
-      onAction(); 
+
+      // 2. Refresh profile so UI reflects the new stake/unstake immediately
+      if (typeof refreshUserProfile === 'function') {
+        await refreshUserProfile();
+      }
+
+      // 3. Success toast with a direct link to the explorer
+      const explorerBase = 'https://sepolia.etherscan.io/tx/';
+      const link = `${explorerBase}${tx.hash}`;
+      toast.success(
+        <a
+          href={link}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline"
+        >
+          {success} – View on Etherscan
+        </a>,
+        { id: toastId }
+      );
+
+      // 4. Notify parent so other panels (Dashboard) refresh as needed
+      onAction();
+
       if (onFinally) onFinally();
-    } catch(err) {
+    } catch (err) {
       toast.error(err?.reason || err.message || errorMsg, { id: toastId });
     } finally {
       setIsProcessing(false);
     }
-  }
+  };
 
   const handleStake = (e) => {
     e.preventDefault();
