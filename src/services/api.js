@@ -1,4 +1,5 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const RPC_URL = import.meta.env.VITE_COINBACK_RPC_URL;
 
 const getHeaders = () => {
     const headers = { 'Content-Type': 'application/json' };
@@ -25,6 +26,108 @@ const handleResponse = async (response) => {
         return response.json();
     }
     return {};
+};
+
+// RPC Testing function - can be called from browser console for debugging
+export const testRpcEndpoint = async () => {
+    console.log('🧪 Testing Coinback RPC endpoint:', RPC_URL);
+    
+    try {
+        // Test 1: Basic block number request
+        console.log('Test 1: Basic block number request');
+        const blockNumResponse = await fetch(RPC_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                jsonrpc: '2.0',
+                id: 'test-block-number',
+                method: 'eth_blockNumber',
+                params: []
+            })
+        });
+        
+        const blockNumData = await blockNumResponse.json();
+        console.log('Block number response:', blockNumData);
+        
+        if (!blockNumData.result) {
+            throw new Error('Failed to get block number');
+        }
+        
+        // Test 2: Chain ID request
+        console.log('Test 2: Chain ID request');
+        const chainIdResponse = await fetch(RPC_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                jsonrpc: '2.0',
+                id: 'test-chain-id',
+                method: 'eth_chainId',
+                params: []
+            })
+        });
+        
+        const chainIdData = await chainIdResponse.json();
+        console.log('Chain ID response:', chainIdData);
+        
+        if (!chainIdData.result) {
+            throw new Error('Failed to get chain ID');
+        }
+        
+        const chainIdHex = chainIdData.result;
+        const chainIdDec = parseInt(chainIdHex, 16);
+        console.log(`Chain ID: ${chainIdDec} (${chainIdHex})`);
+        
+        if (chainIdDec !== 11155111) {
+            console.warn('⚠️ Chain ID is not Sepolia (11155111)');
+        }
+        
+        // Test 3: Network version
+        console.log('Test 3: Network version');
+        const netVersionResponse = await fetch(RPC_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                jsonrpc: '2.0',
+                id: 'test-net-version',
+                method: 'net_version',
+                params: []
+            })
+        });
+        
+        const netVersionData = await netVersionResponse.json();
+        console.log('Network version response:', netVersionData);
+        
+        // Test 4: Get gas price
+        console.log('Test 4: Gas price');
+        const gasPriceResponse = await fetch(RPC_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                jsonrpc: '2.0',
+                id: 'test-gas-price',
+                method: 'eth_gasPrice',
+                params: []
+            })
+        });
+        
+        const gasPriceData = await gasPriceResponse.json();
+        console.log('Gas price response:', gasPriceData);
+        
+        console.log('✅ All RPC tests completed successfully!');
+        return {
+            success: true,
+            blockNumber: blockNumData.result,
+            chainId: chainIdHex,
+            networkVersion: netVersionData.result,
+            gasPrice: gasPriceData.result
+        };
+    } catch (error) {
+        console.error('❌ RPC endpoint test failed:', error);
+        return {
+            success: false,
+            error: error.message
+        };
+    }
 };
 
 export const getSiweNonce = (address) => {
