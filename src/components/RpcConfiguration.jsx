@@ -249,41 +249,82 @@ const RpcConfiguration = () => {
         const hexChainId = `0x${parseInt(targetChainId, 10).toString(16)}`;
         debugLog('Target chain ID', { decimal: targetChainId, hex: hexChainId });
 
-        // FORCE ADD NETWORK: Always try to add our custom network
-        // This ensures the user has our network in their list
-        debugLog('Adding Coinback RPC network');
         try {
-            const networkParams = {
-                chainId: hexChainId,
-                chainName: 'Coinback RPC (Sepolia)',
-                nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
-                rpcUrls: [rpcUrl],
-                blockExplorerUrls: ['https://sepolia.etherscan.io']
-            };
-            
-            debugLog('Adding Ethereum chain with params', networkParams);
-            
-            await window.ethereum.request({
-                method: 'wallet_addEthereumChain',
-                params: [networkParams],
-            });
-            
-            debugLog('Successfully added Coinback RPC network');
-            toast.success('Coinback RPC added to MetaMask!');
-            
-            // Now switch to the network we just added
-            debugLog('Switching to Coinback RPC network');
-            await window.ethereum.request({
-                method: 'wallet_switchEthereumChain',
-                params: [{ chainId: hexChainId }],
-            });
-            
-            debugLog('Successfully switched to Coinback RPC');
-            toast.success('Switched to Coinback RPC!');
-            
-            // Set manual override since user explicitly added and switched to our network
-            setManualOverride(true);
-            localStorage.setItem('coinback_rpc_connected', 'true');
+            // First, try to just switch to the Sepolia network if it already exists
+            debugLog('Trying to switch to existing Sepolia network');
+            try {
+                await window.ethereum.request({
+                    method: 'wallet_switchEthereumChain',
+                    params: [{ chainId: hexChainId }],
+                });
+                debugLog('Successfully switched to Sepolia network');
+                toast.success('Switched to Sepolia network');
+                
+                // After switching to Sepolia, prompt the user to manually add the RPC URL
+                debugLog('Showing RPC URL instructions');
+                toast.success('Now please add the Coinback RPC URL manually in your network settings');
+                
+                // Copy the RPC URL to the clipboard for easy pasting
+                navigator.clipboard.writeText(rpcUrl).then(() => {
+                    setCopied(true);
+                    toast.success('RPC URL copied to clipboard! Add it in MetaMask network settings');
+                    setTimeout(() => setCopied(false), 2500);
+                });
+                
+                // Show detailed instructions
+                setTimeout(() => {
+                    toast((t) => (
+                        <div onClick={() => toast.dismiss(t.id)}>
+                            <p className="font-bold">How to add Coinback RPC:</p>
+                            <ol className="list-decimal pl-5 text-sm">
+                                <li>In MetaMask, go to Settings</li>
+                                <li>Select Networks</li>
+                                <li>Click on "Sepolia"</li>
+                                <li>Replace the RPC URL with Coinback RPC URL (already copied)</li>
+                                <li>Save changes</li>
+                            </ol>
+                        </div>
+                    ), { duration: 10000 });
+                }, 1000);
+                
+                // Set manual override
+                setManualOverride(true);
+                localStorage.setItem('coinback_rpc_connected', 'true');
+                
+                return;
+            } catch (switchError) {
+                // If the network doesn't exist, MetaMask will throw an error
+                debugLog('Could not switch to existing network', switchError);
+                
+                // Only try to add the network if we couldn't switch to it
+                if (switchError.code === 4902) {
+                    debugLog('Network not found, adding Coinback RPC network');
+                    
+                    const networkParams = {
+                        chainId: hexChainId,
+                        chainName: 'Coinback RPC (Sepolia)',
+                        nativeCurrency: { name: 'SepoliaETH', symbol: 'SepoliaETH', decimals: 18 },
+                        rpcUrls: [rpcUrl],
+                        blockExplorerUrls: ['https://sepolia.etherscan.io']
+                    };
+                    
+                    debugLog('Adding Ethereum chain with params', networkParams);
+                    
+                    await window.ethereum.request({
+                        method: 'wallet_addEthereumChain',
+                        params: [networkParams],
+                    });
+                    
+                    debugLog('Successfully added Coinback RPC network');
+                    toast.success('Coinback RPC added to MetaMask!');
+                    
+                    // Set manual override
+                    setManualOverride(true);
+                    localStorage.setItem('coinback_rpc_connected', 'true');
+                } else {
+                    throw switchError;
+                }
+            }
             
             // Check after a delay
             debugLog('Scheduling network check after setup');
