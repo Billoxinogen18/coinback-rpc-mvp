@@ -23,6 +23,7 @@ const RpcConfiguration = () => {
     const [isCheckingNetwork, setIsCheckingNetwork] = useState(true);
     const [networkDetails, setNetworkDetails] = useState(null);
     const [manualOverride, setManualOverride] = useState(false);
+    const [errorDetails, setErrorDetails] = useState(null);
     
     const [copied, setCopied] = useState(false);
 
@@ -38,6 +39,8 @@ const RpcConfiguration = () => {
         }
         
         setIsCheckingNetwork(true);
+        setErrorDetails(null);
+        
         try {
             debugLog('Creating ethers provider');
             const provider = new ethers.BrowserProvider(window.ethereum);
@@ -85,7 +88,39 @@ const RpcConfiguration = () => {
                 if (manualOverride) {
                     debugLog('Using manual override - user confirmed Coinback RPC');
                     setIsUsingCoinbackRpc(true);
+                    setIsCheckingNetwork(false);
                     return;
+                }
+                
+                // RELIABILITY CHECK: Test our RPC endpoint with a simple call
+                try {
+                    // Make a test call to our RPC to check if it's working
+                    const testResult = await fetch(rpcUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            jsonrpc: '2.0',
+                            id: Date.now(),
+                            method: 'eth_blockNumber',
+                            params: []
+                        })
+                    }).then(res => res.json());
+                    
+                    if (testResult.error) {
+                        debugLog('Test call to Coinback RPC failed', testResult.error);
+                        setErrorDetails({
+                            message: 'Coinback RPC endpoint error',
+                            details: testResult.error.message || 'Unknown error'
+                        });
+                    } else {
+                        debugLog('Test call to Coinback RPC succeeded', testResult);
+                    }
+                } catch (err) {
+                    debugLog('Error testing Coinback RPC endpoint', err);
+                    setErrorDetails({
+                        message: 'Could not connect to Coinback RPC',
+                        details: err.message
+                    });
                 }
                 
                 // BETTER DETECTION: Use a unique identifier method
@@ -98,7 +133,9 @@ const RpcConfiguration = () => {
                     const providerUrl = providerInfo.rpcUrl || '';
                     debugLog('Provider info', { providerInfo, providerUrl });
                     
-                    if (providerUrl && providerUrl.includes(new URL(rpcUrl).hostname)) {
+                    const rpcUrlHost = rpcUrl ? new URL(rpcUrl).hostname : '';
+                    
+                    if (providerUrl && rpcUrlHost && providerUrl.includes(rpcUrlHost)) {
                         debugLog('RPC URL found in provider info');
                         isUsingOurRpc = true;
                     }
@@ -134,8 +171,48 @@ const RpcConfiguration = () => {
                         }
                     }
                     
-                    // IMPORTANT: We're completely removing the block number comparison method
-                    // because it's unreliable and causing false positives
+                    // New method: Try a specific test RPC call through MetaMask and see if it works with our backend
+                    if (!isUsingOurRpc) {
+                        try {
+                            // Make a test RPC call through the user's MetaMask provider
+                            const blockNumHex = await window.ethereum.request({ 
+                                method: 'eth_blockNumber', 
+                                params: [] 
+                            });
+                            
+                            // Now make the same call directly to our RPC to compare
+                            const directResponse = await fetch(rpcUrl, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    jsonrpc: '2.0',
+                                    id: Date.now(),
+                                    method: 'eth_blockNumber',
+                                    params: []
+                                })
+                            }).then(res => res.json());
+                            
+                            // If block numbers are identical or very close, they're likely from the same source
+                            if (directResponse.result && blockNumHex) {
+                                const metaMaskBlock = parseInt(blockNumHex, 16);
+                                const directBlock = parseInt(directResponse.result, 16);
+                                const blockDiff = Math.abs(metaMaskBlock - directBlock);
+                                
+                                debugLog('Block number comparison', { 
+                                    metaMaskBlock, 
+                                    directBlock, 
+                                    difference: blockDiff 
+                                });
+                                
+                                if (blockDiff <= 2) { // Allow up to 2 blocks difference due to timing
+                                    debugLog('Block numbers match closely, likely using same RPC');
+                                    isUsingOurRpc = true;
+                                }
+                            }
+                        } catch (err) {
+                            debugLog('Error in RPC comparison test', err);
+                        }
+                    }
                     
                     // FINAL CHECK: Force user to add our network if we're not sure
                     if (!isUsingOurRpc) {
@@ -179,6 +256,10 @@ const RpcConfiguration = () => {
             debugLog('Error checking network', error);
             setIsCorrectNetwork(false);
             setIsUsingCoinbackRpc(false);
+            setErrorDetails({
+                message: 'Error checking network',
+                details: error.message
+            });
         } finally {
             setIsCheckingNetwork(false);
         }
@@ -387,6 +468,26 @@ const RpcConfiguration = () => {
                     <div className="truncate">Target RPC: {networkDetails.targetRpcUrl}</div>
                     <div>Status: {isUsingCoinbackRpc ? '✅ Using Coinback RPC' : '❌ Not using Coinback RPC'}</div>
                     <div>Manual Override: {manualOverride ? 'Yes' : 'No'}</div>
+                    {errorDetails && (
+                        <div className="mt-2 text-red-500">
+                            <div>Error: {errorDetails.message}</div>
+                            <div>Details: {errorDetails.details}</div>
+                        </div>
+                    )}
+                </div>
+            )}
+            
+            {/* Error banner for all users if there's an issue with the RPC */}
+            {errorDetails && (
+                <div className="p-3 bg-red-100 border border-red-300 rounded-lg text-red-800 text-sm">
+                    <div className="font-bold flex items-center">
+                        <AlertTriangle size={16} className="mr-1" />
+                        {errorDetails.message}
+                    </div>
+                    <div className="mt-1 text-xs">{errorDetails.details}</div>
+                    <div className="mt-2 text-xs">
+                        You can still use the app by confirming that you're using Coinback RPC below.
+                    </div>
                 </div>
             )}
             
