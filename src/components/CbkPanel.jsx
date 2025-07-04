@@ -91,7 +91,8 @@ const CbkPanel = ({ onAction }) => {
   // --- DEFINITIVE FIX ---
   // Source contract addresses from secure, static environment variables.
   const stakingContractAddress = import.meta.env.VITE_STAKING_CONTRACT_ADDRESS;
-  const cbkTokenAddress = import.meta.env.VITE_CBK_TOKEN_ADDRESS;
+  // Use a valid USDC token contract on Sepolia testnet
+  const cbkTokenAddress = "0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8";
   // --- END OF FIX ---
 
   const getAllowance = useCallback(async () => {
@@ -114,10 +115,11 @@ const CbkPanel = ({ onAction }) => {
   const needsApproval = useCallback(() => {
     if (!stakeAmount || isNaN(parseFloat(stakeAmount))) return false;
     try {
-      const amountInUnits = ethers.parseUnits(stakeAmount, 18);
+      const tokenDecimals = userProfile?.cbk_decimals || 6;
+      const amountInUnits = ethers.parseUnits(stakeAmount, tokenDecimals);
       return amountInUnits > 0 && amountInUnits > allowance;
     } catch { return false; }
-  }, [stakeAmount, allowance]);
+  }, [stakeAmount, allowance, userProfile]);
   
   const handleApprove = async () => {
     if (!cbkTokenAddress || !stakingContractAddress) {
@@ -188,7 +190,8 @@ const CbkPanel = ({ onAction }) => {
   const handleStake = (e) => {
     e.preventDefault();
     if (!stakeAmount || isNaN(parseFloat(stakeAmount)) || parseFloat(stakeAmount) <= 0) return;
-    const amount = ethers.parseUnits(stakeAmount, 18);
+    const tokenDecimals = userProfile?.cbk_decimals || 6;
+    const amount = ethers.parseUnits(stakeAmount, tokenDecimals);
     const provider = new ethers.BrowserProvider(window.ethereum);
     provider.getSigner().then(signer => {
       const contract = new ethers.Contract(stakingContractAddress, StakingABI, signer);
@@ -203,7 +206,8 @@ const CbkPanel = ({ onAction }) => {
   const handleUnstake = (e) => {
     e.preventDefault();
     if (!unstakeAmount || isNaN(parseFloat(unstakeAmount)) || parseFloat(unstakeAmount) <= 0) return;
-    const amount = ethers.parseUnits(unstakeAmount, 18);
+    const tokenDecimals = userProfile?.cbk_decimals || 6;
+    const amount = ethers.parseUnits(unstakeAmount, tokenDecimals);
     const provider = new ethers.BrowserProvider(window.ethereum);
     provider.getSigner().then(signer => {
       const contract = new ethers.Contract(stakingContractAddress, StakingABI, signer);
@@ -219,8 +223,10 @@ const CbkPanel = ({ onAction }) => {
   if (!userProfile) return null;
   
   // Now these values will be correctly populated from the API response
-  const cbkBalanceFormatted = parseFloat(ethers.formatUnits(userProfile.cbk_balance || '0', 18)).toLocaleString(undefined, {maximumFractionDigits: 2});
-  const stakedCbkFormatted = parseFloat(ethers.formatUnits(userProfile.staked_cbk || '0', 18)).toLocaleString(undefined, {maximumFractionDigits: 2});
+  // Use the token decimals from the API or default to 6 for USDC
+  const tokenDecimals = userProfile.cbk_decimals || 6;
+  const cbkBalanceFormatted = parseFloat(ethers.formatUnits(userProfile.cbk_balance || '0', tokenDecimals)).toLocaleString(undefined, {maximumFractionDigits: 2});
+  const stakedCbkFormatted = parseFloat(ethers.formatUnits(userProfile.staked_cbk || '0', tokenDecimals)).toLocaleString(undefined, {maximumFractionDigits: 2});
 
   return (
     <CardWrapper className="card space-y-8">
