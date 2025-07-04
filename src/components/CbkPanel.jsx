@@ -111,6 +111,9 @@ const CbkPanel = ({ onAction }) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isApproving, setIsApproving] = useState(false);
   const [allowance, setAllowance] = useState(ethers.toBigInt(0));
+  // New: Track live on-chain balances
+  const [walletTokenBalance, setWalletTokenBalance] = useState(ethers.toBigInt(0));
+  const [stakedTokenBalance, setStakedTokenBalance] = useState(ethers.toBigInt(0));
   
   // Debug logging to help troubleshoot
   useEffect(() => {
@@ -155,12 +158,39 @@ const CbkPanel = ({ onAction }) => {
     }
   }, [walletAddress]);
 
+  // Fetch live on-chain wallet CBK balance and staked CBK
+  const fetchBalances = useCallback(async () => {
+    if (!walletAddress || !window.ethereum) return;
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+
+      // Ensure checksummed addresses
+      const checksumWallet = ethers.getAddress(walletAddress);
+      const checksumTokenAddress = ethers.getAddress(CBK_TOKEN_ADDRESS);
+      const checksumStakingAddress = ethers.getAddress(STAKING_CONTRACT_ADDRESS);
+
+      // Token contract (read-only)
+      const tokenContract = await createContract(checksumTokenAddress, ERC20ABI, provider);
+      const balance = await tokenContract.balanceOf(checksumWallet);
+
+      // Staking contract (read-only)
+      const stakingContract = await createContract(checksumStakingAddress, StakingABI, provider);
+      const staked = await stakingContract.stakedBalances(checksumWallet);
+
+      setWalletTokenBalance(balance);
+      setStakedTokenBalance(staked);
+    } catch (err) {
+      console.error("Error fetching on-chain balances:", err);
+    }
+  }, [walletAddress]);
+
+  // Refresh balances whenever wallet connects or an action completes
   useEffect(() => {
-    // Only run if we have a profile and wallet connected.
-    if (userProfile && walletAddress) {
+    if (walletAddress) {
+      fetchBalances();
       getAllowance();
     }
-  }, [userProfile, walletAddress, getAllowance, onAction]); // This will re-run when onAction is called
+  }, [walletAddress, fetchBalances, getAllowance, onAction]);
   
   const needsApproval = useCallback(() => {
     if (!stakeAmount || isNaN(parseFloat(stakeAmount))) return false;
@@ -353,8 +383,8 @@ const CbkPanel = ({ onAction }) => {
     }
   };
   
-  const cbkBalanceFormatted = formatBalance(userProfile.cbk_balance || '0');
-  const stakedCbkFormatted = formatBalance(userProfile.staked_cbk || '0');
+  const cbkBalanceFormatted = formatBalance(walletTokenBalance.toString());
+  const stakedCbkFormatted = formatBalance(stakedTokenBalance.toString());
 
   return (
     <CardWrapper className="card space-y-8">
