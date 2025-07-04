@@ -8,7 +8,8 @@ import { Database, Check, ChevronUp, ChevronDown, Loader2, Coins, TrendingUp } f
 
 // IMPORTANT: Use these addresses directly without any modifications
 // These are the correct addresses with proper checksums
-const STAKING_CONTRACT_ADDRESS = "0xA4F5D4aFd8697d35C5D5A4A9e51683F76Fb863F9";
+// Corrected checksum for staking contract address
+const STAKING_CONTRACT_ADDRESS = "0xa4F5D4AFD8697D35c5d5A4A9E51683f76Fb863f9";
 const CBK_TOKEN_ADDRESS = "0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8";
 
 // The rest of the imports and utility functions remain the same
