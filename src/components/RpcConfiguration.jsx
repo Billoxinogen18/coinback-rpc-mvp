@@ -192,6 +192,22 @@ const RpcConfiguration = () => {
         }
     }, []);
 
+    // Debounce toast notifications to prevent UI glitches
+    const [lastToastTime, setLastToastTime] = useState(0);
+    const showToast = (message, type = 'success') => {
+        const now = Date.now();
+        if (now - lastToastTime > 1000) { // Prevent multiple toasts within 1 second
+            setLastToastTime(now);
+            if (type === 'success') {
+                toast.success(message);
+            } else if (type === 'error') {
+                toast.error(message);
+            } else {
+                toast(message);
+            }
+        }
+    };
+    
     useEffect(() => {
         debugLog('Running initial network check');
         // Initial check when the component mounts or walletAddress changes
@@ -234,7 +250,7 @@ const RpcConfiguration = () => {
         debugLog('Copying RPC URL to clipboard');
         navigator.clipboard.writeText(rpcUrl).then(() => {
             setCopied(true);
-            toast.success('RPC URL copied!');
+            showToast('RPC URL copied!');
             setTimeout(() => setCopied(false), 2500);
         });
     };
@@ -243,7 +259,7 @@ const RpcConfiguration = () => {
         debugLog('Setup network button clicked');
         if (typeof window.ethereum === 'undefined') {
             debugLog('MetaMask not installed');
-            return toast.error('MetaMask not installed.');
+            return showToast('MetaMask not installed.', 'error');
         }
         
         const hexChainId = `0x${parseInt(targetChainId, 10).toString(16)}`;
@@ -253,38 +269,45 @@ const RpcConfiguration = () => {
             // First, try to just switch to the Sepolia network if it already exists
             debugLog('Trying to switch to existing Sepolia network');
             try {
+                // Set loading state first
+                setIsCheckingNetwork(true);
+                
                 await window.ethereum.request({
                     method: 'wallet_switchEthereumChain',
                     params: [{ chainId: hexChainId }],
                 });
                 debugLog('Successfully switched to Sepolia network');
-                toast.success('Switched to Sepolia network');
+                showToast('Switched to Sepolia network');
                 
                 // After switching to Sepolia, prompt the user to manually add the RPC URL
                 debugLog('Showing RPC URL instructions');
-                toast.success('Now please add the Coinback RPC URL manually in your network settings');
-                
-                // Copy the RPC URL to the clipboard for easy pasting
-                navigator.clipboard.writeText(rpcUrl).then(() => {
-                    setCopied(true);
-                    toast.success('RPC URL copied to clipboard! Add it in MetaMask network settings');
-                    setTimeout(() => setCopied(false), 2500);
-                });
-                
-                // Show detailed instructions
                 setTimeout(() => {
-                    toast((t) => (
-                        <div onClick={() => toast.dismiss(t.id)}>
-                            <p className="font-bold">How to add Coinback RPC:</p>
-                            <ol className="list-decimal pl-5 text-sm">
-                                <li>In MetaMask, go to Settings</li>
-                                <li>Select Networks</li>
-                                <li>Click on "Sepolia"</li>
-                                <li>Replace the RPC URL with Coinback RPC URL (already copied)</li>
-                                <li>Save changes</li>
-                            </ol>
-                        </div>
-                    ), { duration: 10000 });
+                    showToast('Now please add the Coinback RPC URL manually in your network settings');
+                    
+                    // Copy the RPC URL to the clipboard for easy pasting
+                    navigator.clipboard.writeText(rpcUrl).then(() => {
+                        setCopied(true);
+                        setTimeout(() => {
+                            showToast('RPC URL copied to clipboard! Add it in MetaMask network settings');
+                            setCopied(false);
+                        }, 500);
+                    });
+                    
+                    // Show detailed instructions
+                    setTimeout(() => {
+                        toast((t) => (
+                            <div onClick={() => toast.dismiss(t.id)}>
+                                <p className="font-bold">How to add Coinback RPC:</p>
+                                <ol className="list-decimal pl-5 text-sm">
+                                    <li>In MetaMask, go to Settings</li>
+                                    <li>Select Networks</li>
+                                    <li>Click on "Sepolia"</li>
+                                    <li>Replace the RPC URL with Coinback RPC URL (already copied)</li>
+                                    <li>Save changes</li>
+                                </ol>
+                            </div>
+                        ), { duration: 10000 });
+                    }, 1000);
                 }, 1000);
                 
                 // Set manual override
@@ -316,7 +339,7 @@ const RpcConfiguration = () => {
                     });
                     
                     debugLog('Successfully added Coinback RPC network');
-                    toast.success('Coinback RPC added to MetaMask!');
+                    showToast('Coinback RPC added to MetaMask!');
                     
                     // Set manual override
                     setManualOverride(true);
@@ -334,7 +357,7 @@ const RpcConfiguration = () => {
             }, 1000);
         } catch (error) {
             debugLog('Error setting up network', error);
-            toast.error(`Failed to set up network: ${error.message}`);
+            showToast(`Failed to set up network: ${error.message}`, 'error');
         }
     };
 
@@ -344,7 +367,7 @@ const RpcConfiguration = () => {
         setManualOverride(true);
         localStorage.setItem('coinback_rpc_connected', 'true');
         setIsUsingCoinbackRpc(true);
-        toast.success('Confirmed using Coinback RPC!');
+        showToast('Confirmed using Coinback RPC!');
     };
     
     return (
