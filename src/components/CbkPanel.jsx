@@ -175,7 +175,12 @@ const CbkPanel = ({ onAction }) => {
 
       // Staking contract (read-only)
       const stakingContract = await createContract(checksumStakingAddress, StakingABI, provider);
-      const staked = await stakingContract.stakedBalances(checksumWallet);
+      let staked = ethers.toBigInt(0);
+      try {
+        staked = await stakingContract.stakedBalances(checksumWallet);
+      } catch (innerErr) {
+        console.warn("stakedBalances() not available or failed; defaulting to 0", innerErr);
+      }
 
       setWalletTokenBalance(balance);
       setStakedTokenBalance(staked);
