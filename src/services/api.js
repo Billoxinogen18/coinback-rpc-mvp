@@ -159,3 +159,9 @@ export const getClaimableRewards = () => {
     const cacheBuster = `?t=${new Date().getTime()}`;
     return fetch(`${API_BASE_URL}/api/rewards/claimable${cacheBuster}`, { headers: getHeaders() }).then(handleResponse);
 };
+
+// New: Fetch staking summary (wallet CBK balance + staked amount)
+export const getStakingSummary = () => {
+    const cacheBuster = `?t=${new Date().getTime()}`;
+    return fetch(`${API_BASE_URL}/api/staking/summary${cacheBuster}`, { headers: getHeaders() }).then(handleResponse);
+};

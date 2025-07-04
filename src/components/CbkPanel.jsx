@@ -114,6 +114,9 @@ const CbkPanel = ({ onAction }) => {
   // New: Track live on-chain balances
   const [walletTokenBalance, setWalletTokenBalance] = useState(ethers.toBigInt(0));
   const [stakedTokenBalance, setStakedTokenBalance] = useState(ethers.toBigInt(0));
+  // Summary API values (backend-calculated)
+  const [summaryWalletBalance, setSummaryWalletBalance] = useState(null);
+  const [summaryStakedBalance, setSummaryStakedBalance] = useState(null);
   
   // Debug logging to help troubleshoot
   useEffect(() => {
@@ -189,13 +192,29 @@ const CbkPanel = ({ onAction }) => {
     }
   }, [walletAddress]);
 
+  // Fetch summary via backend API (requires auth)
+  const fetchSummary = useCallback(async () => {
+    try {
+      const { getStakingSummary } = await import('../services/api');
+      const summary = await getStakingSummary();
+      if (summary) {
+        const decimals = userProfile?.cbk_decimals || 18;
+        setSummaryWalletBalance(ethers.parseUnits(summary.cbkBalance, decimals));
+        setSummaryStakedBalance(ethers.parseUnits(summary.stakedAmount, decimals));
+      }
+    } catch (err) {
+      console.warn('Could not fetch staking summary:', err.message);
+    }
+  }, [userProfile]);
+
   // Refresh balances whenever wallet connects or an action completes
   useEffect(() => {
     if (walletAddress) {
       fetchBalances();
       getAllowance();
+      fetchSummary();
     }
-  }, [walletAddress, fetchBalances, getAllowance, onAction]);
+  }, [walletAddress, fetchBalances, getAllowance, fetchSummary, onAction]);
   
   const needsApproval = useCallback(() => {
     if (!stakeAmount || isNaN(parseFloat(stakeAmount))) return false;
@@ -388,8 +407,11 @@ const CbkPanel = ({ onAction }) => {
     }
   };
   
-  const cbkBalanceFormatted = formatBalance(walletTokenBalance.toString());
-  const stakedCbkFormatted = formatBalance(stakedTokenBalance.toString());
+  const cbkBalanceSource = summaryWalletBalance ?? walletTokenBalance;
+  const stakedBalanceSource = summaryStakedBalance ?? stakedTokenBalance;
+
+  const cbkBalanceFormatted = formatBalance(cbkBalanceSource.toString());
+  const stakedCbkFormatted = formatBalance(stakedBalanceSource.toString());
 
   return (
     <CardWrapper className="card space-y-8">
