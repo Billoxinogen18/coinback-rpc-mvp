@@ -6,6 +6,12 @@ import ERC20ABI from '../abi/ERC20.json';
 import toast from 'react-hot-toast';
 import { Database, Check, ChevronUp, ChevronDown, Loader2, Coins, TrendingUp } from 'lucide-react';
 
+// IMPORTANT: Use these addresses directly without any modifications
+// These are the correct addresses with proper checksums
+const STAKING_CONTRACT_ADDRESS = "0xA4F5D4aFd8697d35C5D5A4A9e51683F76Fb863F9";
+const CBK_TOKEN_ADDRESS = "0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8";
+
+// The rest of the imports and utility functions remain the same
 const useMousePosition = () => {
   const [mousePosition, setMousePosition] = useState({ x: null, y: null });
 
@@ -80,6 +86,23 @@ const StatCard = ({ label, value, isPrimary = false, icon: Icon, subtitle }) => 
   </div>
 );
 
+// Workaround for contract creation to avoid checksum issues
+const createContract = async (address, abi, signer) => {
+  try {
+    // Ensure address has proper checksum
+    const checksumAddress = ethers.getAddress(address);
+    
+    // Create the contract interface directly from ABI
+    const contractInterface = new ethers.Interface(abi);
+    
+    // Create a contract instance with the interface and address
+    return new ethers.Contract(checksumAddress, contractInterface, signer);
+  } catch (error) {
+    console.error("Error creating contract:", error);
+    throw error;
+  }
+};
+
 const CbkPanel = ({ onAction }) => {
   const { walletAddress, userProfile, refreshUserProfile } = useAuth();
   const [stakeAmount, setStakeAmount] = useState('');
@@ -88,22 +111,48 @@ const CbkPanel = ({ onAction }) => {
   const [isApproving, setIsApproving] = useState(false);
   const [allowance, setAllowance] = useState(ethers.toBigInt(0));
   
-  // --- DEFINITIVE FIX ---
-  // Source contract addresses from secure, static environment variables.
-  const stakingContractAddress = import.meta.env.VITE_STAKING_CONTRACT_ADDRESS;
-  // Use a valid USDC token contract on Sepolia testnet
-  const cbkTokenAddress = "0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8";
-  // --- END OF FIX ---
+  // Debug logging to help troubleshoot
+  useEffect(() => {
+    console.log("CbkPanel mounted with:", {
+      walletAddress,
+      userProfile: userProfile ? "exists" : "missing",
+      stakingContract: STAKING_CONTRACT_ADDRESS,
+      cbkToken: CBK_TOKEN_ADDRESS
+    });
+  }, [walletAddress, userProfile]);
 
   const getAllowance = useCallback(async () => {
-    if (!walletAddress || !cbkTokenAddress || !stakingContractAddress || !window.ethereum) return;
+    if (!walletAddress || !window.ethereum) {
+      console.log("Cannot get allowance, missing wallet or ethereum provider");
+      return;
+    }
+    
     try {
+      // Create a provider
       const provider = new ethers.BrowserProvider(window.ethereum);
-      const tokenContract = new ethers.Contract(cbkTokenAddress, ERC20ABI, provider);
-      const userAllowance = await tokenContract.allowance(walletAddress, stakingContractAddress);
+      
+      // Ensure addresses have proper checksum
+      const checksumTokenAddress = ethers.getAddress(CBK_TOKEN_ADDRESS);
+      const checksumStakingAddress = ethers.getAddress(STAKING_CONTRACT_ADDRESS);
+      const checksumWalletAddress = ethers.getAddress(walletAddress);
+      
+      // Log the addresses being used
+      console.log("Getting allowance with addresses:", {
+        token: checksumTokenAddress,
+        staking: checksumStakingAddress,
+        wallet: checksumWalletAddress
+      });
+      
+      // Create contract using the utility function
+      const tokenContract = await createContract(checksumTokenAddress, ERC20ABI, provider);
+      
+      const userAllowance = await tokenContract.allowance(checksumWalletAddress, checksumStakingAddress);
+      console.log("Got allowance:", userAllowance.toString());
       setAllowance(userAllowance);
-    } catch (e) { console.error("Failed to get allowance:", e); }
-  }, [walletAddress, cbkTokenAddress, stakingContractAddress]);
+    } catch (e) { 
+      console.error("Failed to get allowance:", e); 
+    }
+  }, [walletAddress]);
 
   useEffect(() => {
     // Only run if we have a profile and wallet connected.
@@ -122,39 +171,45 @@ const CbkPanel = ({ onAction }) => {
   }, [stakeAmount, allowance, userProfile]);
   
   const handleApprove = async () => {
-    if (!cbkTokenAddress || !stakingContractAddress) {
-        toast.error("App configuration is missing. Please contact support.");
-        return;
-    }
-    
     setIsApproving(true);
     const toastId = toast.loading('Approving token spend...');
     try {
+      // Ensure addresses have proper checksum
+      const checksumTokenAddress = ethers.getAddress(CBK_TOKEN_ADDRESS);
+      const checksumStakingAddress = ethers.getAddress(STAKING_CONTRACT_ADDRESS);
+      
+      console.log("Approving token spend with addresses:", {
+        token: checksumTokenAddress,
+        staking: checksumStakingAddress
+      });
+      
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
-      const tokenContract = new ethers.Contract(cbkTokenAddress, ERC20ABI, signer);
-      const approveTx = await tokenContract.approve(stakingContractAddress, ethers.MaxUint256);
+      
+      // Create contract using the utility function
+      const tokenContract = await createContract(checksumTokenAddress, ERC20ABI, signer);
+      
+      const approveTx = await tokenContract.approve(checksumStakingAddress, ethers.MaxUint256);
       await approveTx.wait();
       toast.success('Approval successful!', { id: toastId });
       await getAllowance();
     } catch (err) {
+      console.error("Approval error:", err);
       toast.error(err?.reason || err.message || 'Approval failed.', { id: toastId });
     } finally {
       setIsApproving(false);
     }
   };
 
-  const executeTx = async (
-    txPromise,
-    { processing, success, error: errorMsg },
-    onFinally
-  ) => {
+  const executeTx = async (txPromise, { processing, success, error: errorMsg }, onFinally) => {
     setIsProcessing(true);
     const toastId = toast.loading(processing);
     try {
       // 1. Send tx → wait for confirmation
       const tx = await txPromise;
+      console.log("Transaction sent:", tx.hash);
       await tx.wait();
+      console.log("Transaction confirmed");
 
       // 2. Refresh profile so UI reflects the new stake/unstake immediately
       if (typeof refreshUserProfile === 'function') {
@@ -181,52 +236,124 @@ const CbkPanel = ({ onAction }) => {
 
       if (onFinally) onFinally();
     } catch (err) {
+      console.error("Transaction error:", err);
       toast.error(err?.reason || err.message || errorMsg, { id: toastId });
     } finally {
       setIsProcessing(false);
     }
   };
 
-  const handleStake = (e) => {
+  const handleStake = async (e) => {
     e.preventDefault();
     if (!stakeAmount || isNaN(parseFloat(stakeAmount)) || parseFloat(stakeAmount) <= 0) return;
-    const tokenDecimals = userProfile?.cbk_decimals || 6;
-    const amount = ethers.parseUnits(stakeAmount, tokenDecimals);
-    const provider = new ethers.BrowserProvider(window.ethereum);
-    provider.getSigner().then(signer => {
-      const contract = new ethers.Contract(stakingContractAddress, StakingABI, signer);
-      executeTx(contract.stake(amount), {
+    
+    try {
+      const tokenDecimals = userProfile?.cbk_decimals || 6;
+      
+      // Validate the input to avoid too many decimals
+      const inputAmount = parseFloat(stakeAmount);
+      const maxDecimalPlaces = Math.min(tokenDecimals, 6); // Use at most 6 decimal places
+      
+      // Format to the correct number of decimal places
+      const formattedAmount = inputAmount.toFixed(maxDecimalPlaces);
+      console.log("Staking with formatted amount:", formattedAmount);
+      
+      const amount = ethers.parseUnits(formattedAmount, tokenDecimals);
+      
+      // Ensure address has proper checksum
+      const checksumStakingAddress = ethers.getAddress(STAKING_CONTRACT_ADDRESS);
+      
+      console.log("Staking amount:", {
+        originalInput: stakeAmount,
+        formattedAmount,
+        parsedUnits: amount.toString(),
+        decimals: tokenDecimals,
+        stakingContract: checksumStakingAddress
+      });
+      
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      
+      // Create contract using the utility function
+      const contract = await createContract(checksumStakingAddress, StakingABI, signer);
+      
+      await executeTx(contract.stake(amount), {
         processing: 'Staking CBK...',
         success: 'Stake successful!',
         error: 'Stake failed.'
       }, () => setStakeAmount(''));
-    });
+    } catch (err) {
+      console.error("Staking preparation error:", err);
+      toast.error(`Staking failed: ${err.message}`);
+    }
   };
   
-  const handleUnstake = (e) => {
+  const handleUnstake = async (e) => {
     e.preventDefault();
     if (!unstakeAmount || isNaN(parseFloat(unstakeAmount)) || parseFloat(unstakeAmount) <= 0) return;
-    const tokenDecimals = userProfile?.cbk_decimals || 6;
-    const amount = ethers.parseUnits(unstakeAmount, tokenDecimals);
-    const provider = new ethers.BrowserProvider(window.ethereum);
-    provider.getSigner().then(signer => {
-      const contract = new ethers.Contract(stakingContractAddress, StakingABI, signer);
-      executeTx(contract.unstake(amount), {
+    
+    try {
+      const tokenDecimals = userProfile?.cbk_decimals || 6;
+      
+      // Validate the input to avoid too many decimals
+      const inputAmount = parseFloat(unstakeAmount);
+      const maxDecimalPlaces = Math.min(tokenDecimals, 6); // Use at most 6 decimal places
+      
+      // Format to the correct number of decimal places
+      const formattedAmount = inputAmount.toFixed(maxDecimalPlaces);
+      console.log("Unstaking with formatted amount:", formattedAmount);
+      
+      const amount = ethers.parseUnits(formattedAmount, tokenDecimals);
+      
+      // Ensure address has proper checksum
+      const checksumStakingAddress = ethers.getAddress(STAKING_CONTRACT_ADDRESS);
+      
+      console.log("Unstaking amount:", {
+        originalInput: unstakeAmount,
+        formattedAmount,
+        parsedUnits: amount.toString(),
+        decimals: tokenDecimals,
+        stakingContract: checksumStakingAddress
+      });
+      
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      
+      // Create contract using the utility function
+      const contract = await createContract(checksumStakingAddress, StakingABI, signer);
+      
+      await executeTx(contract.unstake(amount), {
         processing: 'Unstaking CBK...',
         success: 'Unstake successful!',
         error: 'Unstake failed.'
       }, () => setUnstakeAmount(''));
-    });
+    } catch (err) {
+      console.error("Unstaking preparation error:", err);
+      toast.error(`Unstaking failed: ${err.message}`);
+    }
   };
   
   // This prevents the component from rendering with stale or incomplete data
   if (!userProfile) return null;
   
-  // Now these values will be correctly populated from the API response
-  // Use the token decimals from the API or default to 6 for USDC
-  const tokenDecimals = userProfile.cbk_decimals || 6;
-  const cbkBalanceFormatted = parseFloat(ethers.formatUnits(userProfile.cbk_balance || '0', tokenDecimals)).toLocaleString(undefined, {maximumFractionDigits: 2});
-  const stakedCbkFormatted = parseFloat(ethers.formatUnits(userProfile.staked_cbk || '0', tokenDecimals)).toLocaleString(undefined, {maximumFractionDigits: 2});
+  // Fix for too many decimals - ensure we don't exceed the allowed precision
+  const formatBalance = (value) => {
+    try {
+      if (!value || value === '0') return '0';
+      
+      // Convert to a number first to handle scientific notation
+      const balanceNum = Number(ethers.formatUnits(value, userProfile.cbk_decimals || 6));
+      
+      // Format with max 6 decimal places to avoid precision errors
+      return balanceNum.toLocaleString(undefined, {maximumFractionDigits: 6});
+    } catch (err) {
+      console.error("Error formatting balance:", err);
+      return '0';
+    }
+  };
+  
+  const cbkBalanceFormatted = formatBalance(userProfile.cbk_balance || '0');
+  const stakedCbkFormatted = formatBalance(userProfile.staked_cbk || '0');
 
   return (
     <CardWrapper className="card space-y-8">
@@ -266,4 +393,5 @@ const CbkPanel = ({ onAction }) => {
     </CardWrapper>
   );
 };
+
 export default CbkPanel;
